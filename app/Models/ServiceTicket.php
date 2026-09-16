@@ -17,8 +17,10 @@ class ServiceTicket extends Model
         'unit_model',
         'serial_number',
         'service_date',
+        'deadline',
         'status',
         'status_note',
+        'work_status',
         'work_types',
         'other_work_text',
         'mainwork_center',
@@ -32,5 +34,6 @@ class ServiceTicket extends Model
     protected $casts = [
         'work_types' => 'array',
         'service_date' => 'date:Y-m-d',
+        'deadline' => 'date:Y-m-d',
     ];
 }

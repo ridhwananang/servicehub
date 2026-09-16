@@ -14,24 +14,25 @@ interface PwaInstallGuideDialogProps {
     isOpen: boolean;
     onClose: () => void;
     isIOS: boolean;
+    onMarkInstalled?: () => void;
 }
 
-export function PwaInstallGuideDialog({ isOpen, onClose, isIOS }: PwaInstallGuideDialogProps) {
+export function PwaInstallGuideDialog({ isOpen, onClose, isIOS, onMarkInstalled }: PwaInstallGuideDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 <DialogHeader className="flex flex-col items-center text-center gap-3">
                     <div
-                        className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400"
+                        className="flex size-12 items-center justify-center rounded-2xl bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400"
                         aria-hidden="true"
                     >
                         <Smartphone className="size-6" />
                     </div>
                     <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
-                        Cara Install ServisHub Web App
+                        Cara Install Aquos Platinum Web App
                     </DialogTitle>
                     <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-                        Jadikan ServisHub sebagai aplikasi mandiri di perangkat Anda tanpa perlu melalui toko aplikasi.
+                        Jadikan Aquos Platinum sebagai aplikasi mandiri di perangkat Anda tanpa perlu melalui toko aplikasi.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -39,36 +40,36 @@ export function PwaInstallGuideDialog({ isOpen, onClose, isIOS }: PwaInstallGuid
                     {isIOS ? (
                         <>
                             <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/60 dark:border-slate-800">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-[11px]">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-red-600 text-white font-bold text-[11px]">
                                     1
                                 </div>
                                 <div className="leading-relaxed">
-                                    Buka peramban <strong>Safari</strong> di iPhone/iPad Anda, lalu ketuk tombol <strong>Bagikan / Share</strong> (<Share className="inline size-3.5 mx-0.5 text-indigo-600" />) di bilah bawah.
+                                    Buka peramban <strong>Safari</strong> di iPhone/iPad Anda, lalu ketuk tombol <strong>Bagikan / Share</strong> (<Share className="inline size-3.5 mx-0.5 text-red-600" />) di bilah bawah.
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/60 dark:border-slate-800">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-[11px]">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-red-600 text-white font-bold text-[11px]">
                                     2
                                 </div>
                                 <div className="leading-relaxed">
-                                    Gulir ke bawah dan pilih menu <strong>"Tambah ke Layar Utama" (Add to Home Screen)</strong> (<PlusSquare className="inline size-3.5 mx-0.5 text-indigo-600" />).
+                                    Gulir ke bawah dan pilih menu <strong>"Tambah ke Layar Utama" (Add to Home Screen)</strong> (<PlusSquare className="inline size-3.5 mx-0.5 text-red-600" />).
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/60 dark:border-slate-800">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-[11px]">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-red-600 text-white font-bold text-[11px]">
                                     3
                                 </div>
                                 <div className="leading-relaxed">
-                                    Ketuk <strong>"Tambah" (Add)</strong> di pojok kanan atas. Ikon ServisHub akan muncul di layar ponsel seperti aplikasi asli!
+                                    Ketuk <strong>"Tambah" (Add)</strong> di pojok kanan atas. Ikon Aquos Platinum akan muncul di layar ponsel seperti aplikasi asli!
                                 </div>
                             </div>
                         </>
                     ) : (
                         <>
                             <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/60 dark:border-slate-800">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-[11px]">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-red-600 text-white font-bold text-[11px]">
                                     1
                                 </div>
                                 <div className="leading-relaxed">
@@ -77,7 +78,7 @@ export function PwaInstallGuideDialog({ isOpen, onClose, isIOS }: PwaInstallGuid
                             </div>
 
                             <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/60 dark:border-slate-800">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-[11px]">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-red-600 text-white font-bold text-[11px]">
                                     2
                                 </div>
                                 <div className="leading-relaxed">
@@ -86,22 +87,33 @@ export function PwaInstallGuideDialog({ isOpen, onClose, isIOS }: PwaInstallGuid
                             </div>
 
                             <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/60 dark:border-slate-800">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-[11px]">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-red-600 text-white font-bold text-[11px]">
                                     3
                                 </div>
                                 <div className="leading-relaxed">
-                                    Aplikasi ServisHub siap dibuka secara mandiri berlayar penuh (*fullscreen standalone*) tanpa bilah URL browser!
+                                    Aplikasi Aquos Platinum siap dibuka secara mandiri berlayar penuh (*fullscreen standalone*) tanpa bilah URL browser!
                                 </div>
                             </div>
                         </>
                     )}
                 </div>
 
-                <DialogFooter className="mt-2">
+                <DialogFooter className="mt-2 flex flex-col-reverse sm:flex-row gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            if (onMarkInstalled) onMarkInstalled();
+                            onClose();
+                        }}
+                        className="w-full sm:flex-1 rounded-xl h-10 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold"
+                    >
+                        Sudah Saya Pasang
+                    </Button>
                     <Button
                         type="button"
                         onClick={onClose}
-                        className="w-full rounded-xl h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs"
+                        className="w-full sm:flex-1 rounded-xl h-10 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs"
                     >
                         Saya Mengerti
                     </Button>

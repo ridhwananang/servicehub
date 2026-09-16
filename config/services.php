@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    'document_scanner' => [
+        'provider' => env('DOCUMENT_SCANNER_PROVIDER', 'groq'),
+    ],
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+        'timeout' => env('GEMINI_TIMEOUT', 30),
+    ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
+        'timeout' => env('GROQ_TIMEOUT', 30),
+    ],
+
 ];

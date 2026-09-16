@@ -28,28 +28,31 @@ export default function ConfirmPassword() {
 
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
-                    <div className="space-y-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Kata Sandi
+                            </Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
-                                placeholder="Password"
+                                placeholder="Masukkan kata sandi Anda"
                                 autoComplete="current-password"
                                 autoFocus
+                                className="h-10 bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus-visible:border-red-600 focus-visible:ring-red-600/20 text-xs sm:text-sm shadow-xs transition-colors"
                             />
 
                             <InputError message={errors.password} />
                         </div>
 
-                        <div className="flex items-center">
+                        <div className="pt-1">
                             <Button
-                                className="w-full"
+                                className="w-full h-10.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs sm:text-sm shadow-lg shadow-red-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99]"
                                 disabled={processing}
                                 data-test="confirm-password-button"
                             >
-                                {processing && <Spinner />}
-                                Confirm password
+                                {processing && <Spinner className="size-4 mr-1 text-white" />}
+                                Konfirmasi Kata Sandi
                             </Button>
                         </div>
                     </div>

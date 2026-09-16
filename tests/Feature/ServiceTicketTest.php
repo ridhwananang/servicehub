@@ -262,4 +262,63 @@ test('user can export tickets filtered by month', function () {
     $content = $response->streamedContent();
     expect($content)->toContain('NTF-EXP-SEP');
     expect($content)->not->toContain('NTF-EXP-AUG');
+    expect($content)->toContain('DEADLINE');
+    expect($content)->toContain('STATUS PENGERJAAN');
+});
+
+test('user can create ticket with deadline and default work status is belum_selesai', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $data = [
+        'notif_number' => 'NTF-DL-001',
+        'customer_name' => 'Budi Santoso',
+        'customer_phone' => '081234567890',
+        'unit_model' => 'Smart TV 55 Inch',
+        'serial_number' => 'TV-55-999',
+        'deadline' => '2026-09-20',
+        'status' => 'berbayar',
+        'work_types' => ['Install Bracket'],
+        'mainwork_center' => 'Pulogadung',
+    ];
+
+    $response = $this->post(route('tickets.store'), $data);
+    $response->assertRedirect();
+
+    $ticket = ServiceTicket::where('notif_number', 'NTF-DL-001')->first();
+    expect($ticket)->not->toBeNull();
+    expect($ticket->work_status)->toBe('belum_selesai');
+    expect($ticket->deadline->toDateString())->toBe('2026-09-20');
+});
+
+test('user can toggle ticket work status between belum_selesai and selesai', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $ticket = ServiceTicket::create([
+        'notif_number' => 'NTF-TOGGLE-001',
+        'customer_name' => 'Rina Marlina',
+        'customer_phone' => '081299887766',
+        'unit_model' => 'AC Inverter 1PK',
+        'serial_number' => 'AC-INV-001',
+        'deadline' => '2026-09-18',
+        'status' => 'berbayar',
+        'work_status' => 'belum_selesai',
+        'work_types' => ['Service Minor'],
+        'mainwork_center' => 'MOI',
+    ]);
+
+    // Toggle to selesai
+    $response = $this->patch(route('tickets.toggle-status', $ticket->id), [
+        'work_status' => 'selesai',
+    ]);
+    $response->assertRedirect();
+    $ticket->refresh();
+    expect($ticket->work_status)->toBe('selesai');
+
+    // Toggle back to belum_selesai without explicit param
+    $response2 = $this->patch(route('tickets.toggle-status', $ticket->id));
+    $response2->assertRedirect();
+    $ticket->refresh();
+    expect($ticket->work_status)->toBe('belum_selesai');
 });

@@ -7,3 +7,5 @@ export { TicketCardItem } from './ticket-card-item';
 export { TicketCardsView } from './ticket-cards-view';
 export { LogoutDialog } from './logout-dialog';
 export { DeleteTicketDialog } from './delete-ticket-dialog';
+export { WorkStatusToggle } from './work-status-toggle';
+export { TicketDetailDialog } from './ticket-detail-dialog';

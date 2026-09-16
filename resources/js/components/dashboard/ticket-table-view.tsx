@@ -9,6 +9,7 @@ interface TicketTableViewProps {
     onEdit: (ticket: ServiceTicket) => void;
     onDelete: (ticket: ServiceTicket) => void;
     onPreviewPhotos: (ticket: ServiceTicket) => void;
+    onViewDetail: (ticket: ServiceTicket) => void;
 }
 
 export function TicketTableView({
@@ -17,6 +18,7 @@ export function TicketTableView({
     onEdit,
     onDelete,
     onPreviewPhotos,
+    onViewDetail,
 }: TicketTableViewProps) {
     const isVisible =
         viewMode === 'table' ? true : viewMode === 'cards' ? false : true; // 'auto' shows on desktop
@@ -24,7 +26,7 @@ export function TicketTableView({
     return (
         <section
             aria-label="Tabel Data Tiket Servis"
-            className={`overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 ${
+            className={`overflow-hidden rounded-2xl border border-zinc-200/80 bg-gradient-to-b from-white via-zinc-50/30 to-zinc-50/60 shadow-xs dark:border-zinc-800/80 dark:bg-gradient-to-b dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-zinc-950/95 ${
                 viewMode === 'table'
                     ? 'block'
                     : viewMode === 'cards'
@@ -32,9 +34,9 @@ export function TicketTableView({
                     : 'hidden lg:block'
             }`}
         >
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar pb-1">
                 <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                    <thead className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
+                    <thead className="border-b border-zinc-200 bg-gradient-to-r from-zinc-50 via-zinc-100/70 to-zinc-50 text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:bg-gradient-to-r dark:from-zinc-950/90 dark:via-zinc-900/90 dark:to-zinc-950/90 dark:text-zinc-400">
                         <tr>
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">NOTIF (UNIQUE)</th>
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">NAMA PELANGGAN</th>
@@ -45,7 +47,7 @@ export function TicketTableView({
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">STATUS</th>
                             <th scope="col" className="px-3.5 py-3.5">JENIS PENGERJAAN</th>
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">MAINWORK CENTER</th>
-                            <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">TANGGAL & JAM</th>
+                            <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">DEADLINE & PROSES</th>
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">FOTO DOKUMENTASI</th>
                             <th scope="col" className="px-3.5 py-3.5 text-right whitespace-nowrap">AKSI</th>
                         </tr>
@@ -65,6 +67,7 @@ export function TicketTableView({
                                     onEdit={onEdit}
                                     onDelete={onDelete}
                                     onPreviewPhotos={onPreviewPhotos}
+                                    onViewDetail={onViewDetail}
                                 />
                             ))
                         )}

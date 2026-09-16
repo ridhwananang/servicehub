@@ -16,7 +16,7 @@ type Props = {
 export default function Register({ passwordRules }: Props) {
     return (
         <>
-            <Head title="Daftar Akun - ServisHub" />
+            <Head title="Daftar Akun - Aquos Platinum" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -25,9 +25,9 @@ export default function Register({ passwordRules }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="name" className="text-xs font-semibold text-slate-300">
+                        <div className="space-y-3.5">
+                            <div className="space-y-1">
+                                <Label htmlFor="name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                     Nama Lengkap
                                 </Label>
                                 <Input
@@ -39,7 +39,7 @@ export default function Register({ passwordRules }: Props) {
                                     autoComplete="name"
                                     name="name"
                                     placeholder="Nama teknisi / staf"
-                                    className="h-10 bg-slate-950/60 border-slate-800 text-white placeholder:text-slate-500 rounded-xl focus-visible:border-indigo-500 focus-visible:ring-indigo-500/30 text-sm"
+                                    className="h-10 bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus-visible:border-red-600 focus-visible:ring-red-600/20 text-xs sm:text-sm shadow-xs transition-colors"
                                 />
                                 <InputError
                                     message={errors.name}
@@ -47,8 +47,8 @@ export default function Register({ passwordRules }: Props) {
                                 />
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-xs font-semibold text-slate-300">
+                            <div className="space-y-1">
+                                <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                     Alamat Email
                                 </Label>
                                 <Input
@@ -58,14 +58,14 @@ export default function Register({ passwordRules }: Props) {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
-                                    placeholder="nama@servishub.com"
-                                    className="h-10 bg-slate-950/60 border-slate-800 text-white placeholder:text-slate-500 rounded-xl focus-visible:border-indigo-500 focus-visible:ring-indigo-500/30 text-sm"
+                                    placeholder="nama@aquosplatinum.com"
+                                    className="h-10 bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus-visible:border-red-600 focus-visible:ring-red-600/20 text-xs sm:text-sm shadow-xs transition-colors"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="password" className="text-xs font-semibold text-slate-300">
+                            <div className="space-y-1">
+                                <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                     Kata Sandi
                                 </Label>
                                 <PasswordInput
@@ -76,13 +76,13 @@ export default function Register({ passwordRules }: Props) {
                                     name="password"
                                     placeholder="Minimal 8 karakter"
                                     passwordrules={passwordRules}
-                                    className="h-10 bg-slate-950/60 border-slate-800 text-white placeholder:text-slate-500 rounded-xl focus-visible:border-indigo-500 focus-visible:ring-indigo-500/30 text-sm"
+                                    className="h-10 bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus-visible:border-red-600 focus-visible:ring-red-600/20 text-xs sm:text-sm shadow-xs transition-colors"
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="password_confirmation" className="text-xs font-semibold text-slate-300">
+                            <div className="space-y-1">
+                                <Label htmlFor="password_confirmation" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                     Konfirmasi Kata Sandi
                                 </Label>
                                 <PasswordInput
@@ -93,7 +93,7 @@ export default function Register({ passwordRules }: Props) {
                                     name="password_confirmation"
                                     placeholder="Ulangi kata sandi"
                                     passwordrules={passwordRules}
-                                    className="h-10 bg-slate-950/60 border-slate-800 text-white placeholder:text-slate-500 rounded-xl focus-visible:border-indigo-500 focus-visible:ring-indigo-500/30 text-sm"
+                                    className="h-10 bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus-visible:border-red-600 focus-visible:ring-red-600/20 text-xs sm:text-sm shadow-xs transition-colors"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -102,19 +102,19 @@ export default function Register({ passwordRules }: Props) {
 
                             <Button
                                 type="submit"
-                                className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer mt-2"
+                                className="w-full h-10.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs sm:text-sm shadow-lg shadow-red-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer mt-2 active:scale-[0.99]"
                                 tabIndex={5}
                                 disabled={processing}
                                 data-test="register-user-button"
                             >
-                                {processing && <Spinner className="size-4 mr-1" />}
+                                {processing && <Spinner className="size-4 mr-1 text-white" />}
                                 <span>Daftar Akun Baru</span>
                             </Button>
                         </div>
 
-                        <div className="text-center text-xs text-slate-400 pt-1 border-t border-slate-800/60">
+                        <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
                             Sudah memiliki akun?{' '}
-                            <TextLink href={login()} tabIndex={6} className="font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">
+                            <TextLink href={login()} tabIndex={6} className="font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:underline">
                                 Masuk ke Akun
                             </TextLink>
                         </div>

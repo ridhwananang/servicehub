@@ -39,8 +39,10 @@ class UpdateServiceTicketRequest extends FormRequest
             'unit_model' => 'required|string|max:255',
             'serial_number' => 'required|string|max:255',
             'service_date' => 'nullable|date',
+            'deadline' => 'nullable|date',
             'status' => 'required|in:berbayar,tidak_berbayar',
             'status_note' => 'nullable|string|max:100',
+            'work_status' => 'nullable|in:belum_selesai,selesai',
             'work_types' => 'required|array|min:1',
             'work_types.*' => 'string|max:100',
             'other_work_text' => 'nullable|string|max:255',
@@ -53,5 +55,17 @@ class UpdateServiceTicketRequest extends FormRequest
             'completion_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'completion_photo_url' => 'nullable|string',
         ];
+    }
+
+    /**
+     * Prepare inputs for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('deadline') && !$this->has('service_date')) {
+            $this->merge(['service_date' => $this->input('deadline')]);
+        } elseif ($this->has('service_date') && !$this->has('deadline')) {
+            $this->merge(['deadline' => $this->input('service_date')]);
+        }
     }
 }

@@ -25,7 +25,7 @@ export function PhotoPreviewDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-3xl overflow-hidden p-6 sm:rounded-2xl">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar p-4 sm:p-6 sm:rounded-2xl">
                 <DialogHeader className="border-b pb-3">
                     <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="font-mono text-sm font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">

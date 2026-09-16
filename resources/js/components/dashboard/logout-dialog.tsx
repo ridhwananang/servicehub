@@ -42,7 +42,7 @@ export function LogoutDialog({ isOpen, onClose, displayName }: LogoutDialogProps
                         Konfirmasi Keluar Akun
                     </DialogTitle>
                     <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Apakah Anda yakin ingin keluar dari akun ServisHub sebagai{' '}
+                        Apakah Anda yakin ingin keluar dari akun Aquos Platinum sebagai{' '}
                         <strong className="font-semibold text-slate-800 dark:text-slate-200">
                             {displayName}
                         </strong>

@@ -29,8 +29,10 @@ class StoreServiceTicketRequest extends FormRequest
             'unit_model' => 'required|string|max:255',
             'serial_number' => 'required|string|max:255',
             'service_date' => 'nullable|date',
+            'deadline' => 'nullable|date',
             'status' => 'required|in:berbayar,tidak_berbayar',
             'status_note' => 'nullable|string|max:100',
+            'work_status' => 'nullable|in:belum_selesai,selesai',
             'work_types' => 'required|array|min:1',
             'work_types.*' => 'string|max:100',
             'other_work_text' => 'nullable|string|max:255',
@@ -50,10 +52,12 @@ class StoreServiceTicketRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if (!$this->has('service_date') || empty($this->input('service_date'))) {
-            $this->merge([
-                'service_date' => now()->toDateString(),
-            ]);
-        }
+        $date = $this->input('deadline') ?: ($this->input('service_date') ?: now()->toDateString());
+
+        $this->merge([
+            'deadline' => $this->input('deadline') ?: $date,
+            'service_date' => $this->input('service_date') ?: $date,
+            'work_status' => $this->input('work_status') ?: 'belum_selesai',
+        ]);
     }
 }

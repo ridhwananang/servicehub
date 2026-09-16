@@ -83,6 +83,13 @@ class ServiceTicketController extends Controller
             $validated['service_date'] = now()->toDateString();
         }
 
+        if (empty($validated['deadline'])) {
+            $validated['deadline'] = $validated['service_date'] ?? now()->toDateString();
+        }
+        if (empty($validated['work_status'])) {
+            $validated['work_status'] = 'belum_selesai';
+        }
+
         $disk = $this->getStorageDisk();
 
         // Handle Visit Photo Upload
@@ -114,7 +121,10 @@ class ServiceTicketController extends Controller
         $validated = $request->validated();
 
         if (empty($validated['service_date'])) {
-            $validated['service_date'] = now()->toDateString();
+            $validated['service_date'] = $validated['deadline'] ?? now()->toDateString();
+        }
+        if (empty($validated['deadline'])) {
+            $validated['deadline'] = $validated['service_date'];
         }
 
         $disk = $this->getStorageDisk();
@@ -139,6 +149,25 @@ class ServiceTicketController extends Controller
     }
 
     /**
+     * Toggle work status between belum_selesai and selesai.
+     */
+    public function toggleWorkStatus(Request $request, ServiceTicket $ticket)
+    {
+        $newStatus = $request->input('work_status');
+        if (!in_array($newStatus, ['belum_selesai', 'selesai'])) {
+            $newStatus = ($ticket->work_status === 'selesai') ? 'belum_selesai' : 'selesai';
+        }
+
+        $ticket->update([
+            'work_status' => $newStatus,
+        ]);
+
+        $statusLabel = $newStatus === 'selesai' ? 'Selesai' : 'Belum Selesai';
+
+        return redirect()->back()->with('success', "Status pengerjaan tiket {$ticket->notif_number} diubah menjadi {$statusLabel}.");
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(ServiceTicket $ticket)
@@ -160,7 +189,7 @@ class ServiceTicketController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="servishub_tiket_' . date('Ymd_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="aquos_platinum_tiket_' . date('Ymd_His') . '.csv"',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => '0',
@@ -184,13 +213,15 @@ class ServiceTicketController extends Controller
 
             fputcsv($file, [
                 'NOTIF (UNIQUE)',
+                'DEADLINE',
+                'STATUS PENGERJAAN',
                 'TANGGAL PENGERJAAN',
                 'NAMA PELANGGAN',
                 'NO TELEPON',
                 'ALAMAT PELANGGAN',
                 'MODEL UNIT',
                 'NO SERI',
-                'STATUS',
+                'STATUS GARANSI/PEMBAYARAN',
                 'KETERANGAN STATUS',
                 'JENIS PENGERJAAN',
                 'PENGERJAAN LAIN',
@@ -208,6 +239,8 @@ class ServiceTicketController extends Controller
 
                 fputcsv($file, [
                     $sanitize($t->notif_number),
+                    $t->deadline ? date('Y-m-d', strtotime($t->deadline)) : ($t->service_date ? date('Y-m-d', strtotime($t->service_date)) : '-'),
+                    $t->work_status === 'selesai' ? 'Selesai' : 'Belum Selesai',
                     $t->service_date ? date('Y-m-d', strtotime($t->service_date)) : '-',
                     $sanitize($t->customer_name),
                     $sanitize($t->customer_phone),

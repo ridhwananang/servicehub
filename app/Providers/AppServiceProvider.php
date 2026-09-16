@@ -15,7 +15,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Services\DocumentScanner\Contracts\DocumentScannerInterface::class,
+            function ($app) {
+                $provider = config('services.document_scanner.provider', 'groq');
+                if ($provider === 'gemini') {
+                    return $app->make(\App\Services\DocumentScanner\GeminiDocumentScanner::class);
+                }
+                return $app->make(\App\Services\DocumentScanner\GroqDocumentScanner::class);
+            }
+        );
     }
 
     /**

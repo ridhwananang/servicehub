@@ -16,8 +16,10 @@ export interface ServiceTicket {
     unit_model: string;
     serial_number: string;
     service_date?: string | null;
+    deadline?: string | null;
     status: 'berbayar' | 'tidak_berbayar';
     status_note: string | null;
+    work_status: 'belum_selesai' | 'selesai';
     work_types: string[];
     other_work_text: string | null;
     mainwork_center: string;

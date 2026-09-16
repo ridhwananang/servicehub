@@ -1,5 +1,5 @@
-// ServisHub Progressive Web App Service Worker
-const CACHE_NAME = 'servishub-pwa-v1';
+// Aquos Platinum Progressive Web App Service Worker
+const CACHE_NAME = 'aquos-platinum-pwa-v2';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

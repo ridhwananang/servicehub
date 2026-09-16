@@ -30,21 +30,22 @@ export function useTicketFilters({
     const [monthFilter, setMonthFilter] = useState(initialMonth);
     const [sortOrder, setSortOrder] = useState(initialSort);
 
-    // Responsive view mode state: persisted in localStorage if available
-    const [viewMode, setViewMode] = useState<ViewMode>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('servishub_view_mode') as ViewMode | null;
+    // Responsive view mode state: initialized to 'auto' for SSR hydration safety, synced with localStorage in useEffect
+    const [viewMode, setViewMode] = useState<ViewMode>('auto');
+
+    useEffect(() => {
+        try {
+            const saved = (localStorage.getItem('aquos_platinum_view_mode') || localStorage.getItem('servishub_view_mode')) as ViewMode | null;
             if (saved && (saved === 'auto' || saved === 'table' || saved === 'cards')) {
-                return saved;
+                setViewMode(saved);
             }
-        }
-        return 'auto';
-    });
+        } catch {}
+    }, []);
 
     const handleSetViewMode = (mode: ViewMode) => {
         setViewMode(mode);
         if (typeof window !== 'undefined') {
-            localStorage.setItem('servishub_view_mode', mode);
+            localStorage.setItem('aquos_platinum_view_mode', mode);
         }
     };
 
@@ -68,7 +69,7 @@ export function useTicketFilters({
 
         // Add months from tickets
         tickets.forEach((t) => {
-            const dateStr = t.service_date || t.created_at;
+            const dateStr = t.deadline || t.service_date || t.created_at;
             if (dateStr && dateStr.length >= 7) {
                 monthSet.add(dateStr.slice(0, 7));
             }
@@ -119,9 +120,9 @@ export function useTicketFilters({
                     }
                 }
 
-                // Month match (checks service_date or created_at prefix YYYY-MM)
+                // Month match (checks deadline, service_date, or created_at prefix YYYY-MM)
                 if (monthFilter !== 'semua') {
-                    const dateStr = ticket.service_date || ticket.created_at;
+                    const dateStr = ticket.deadline || ticket.service_date || ticket.created_at;
                     if (!dateStr || !dateStr.startsWith(monthFilter)) {
                         return false;
                     }
@@ -130,8 +131,16 @@ export function useTicketFilters({
                 return true;
             })
             .sort((a, b) => {
-                const dateA = a.service_date ? new Date(a.service_date).getTime() : new Date(a.created_at).getTime();
-                const dateB = b.service_date ? new Date(b.service_date).getTime() : new Date(b.created_at).getTime();
+                const dateA = a.deadline
+                    ? new Date(a.deadline).getTime()
+                    : a.service_date
+                    ? new Date(a.service_date).getTime()
+                    : new Date(a.created_at).getTime();
+                const dateB = b.deadline
+                    ? new Date(b.deadline).getTime()
+                    : b.service_date
+                    ? new Date(b.service_date).getTime()
+                    : new Date(b.created_at).getTime();
 
                 if (sortOrder === 'waktu_terlama') {
                     return dateA - dateB;

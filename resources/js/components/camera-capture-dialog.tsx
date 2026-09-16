@@ -169,7 +169,7 @@ export function CameraCaptureDialog({
                 <DialogHeader className="border-b border-slate-800 pb-2.5">
                     <div className="flex items-center justify-between">
                         <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-                            <Camera className="size-4 text-indigo-400" />
+                            <Camera className="size-4 text-red-400" />
                             {title}
                         </DialogTitle>
                     </div>
@@ -204,7 +204,7 @@ export function CameraCaptureDialog({
                             <Button
                                 type="button"
                                 onClick={() => fileInputFallbackRef.current?.click()}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg px-4 py-2"
+                                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg px-4 py-2"
                             >
                                 <Camera className="size-4 mr-1.5" />
                                 Buka Kamera Bawaan HP
@@ -266,7 +266,7 @@ export function CameraCaptureDialog({
                                 type="button"
                                 onClick={takePhoto}
                                 disabled={Boolean(cameraError)}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 flex items-center gap-1.5"
+                                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 flex items-center gap-1.5"
                             >
                                 <Camera className="size-4" />
                                 Jepret Foto

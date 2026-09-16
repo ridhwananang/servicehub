@@ -10,6 +10,7 @@ import {
     TicketCardsView,
     TicketTableView,
     DeleteTicketDialog,
+    TicketDetailDialog,
 } from '@/components/dashboard';
 import { useTicketFilters } from '@/hooks/use-ticket-filters';
 import type { ServiceTicket, TicketStats, TicketFilters } from '@/types';
@@ -42,6 +43,7 @@ export default function Dashboard({
     const [ticketToEdit, setTicketToEdit] = useState<ServiceTicket | null>(null);
     const [previewTicket, setPreviewTicket] = useState<ServiceTicket | null>(null);
     const [ticketToDelete, setTicketToDelete] = useState<ServiceTicket | null>(null);
+    const [detailTicket, setDetailTicket] = useState<ServiceTicket | null>(null);
 
     // Custom hook for debounced search, filtering, and responsive view state
     const {
@@ -110,9 +112,13 @@ export default function Dashboard({
         setPreviewTicket(ticket);
     }, []);
 
+    const handleViewDetail = useCallback((ticket: ServiceTicket) => {
+        setDetailTicket(ticket);
+    }, []);
+
     return (
         <div className="min-h-screen bg-slate-50/60 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
-            <Head title="ServisHub - Dashboard Tiket Servis & Pengerjaan" />
+            <Head title="Aquos Platinum - Dashboard Tiket Servis & Pengerjaan" />
             <Toaster position="top-right" richColors />
 
             {/* Standalone Header Nav */}
@@ -171,6 +177,7 @@ export default function Dashboard({
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onPreviewPhotos={handlePreviewPhotos}
+                    onViewDetail={handleViewDetail}
                 />
 
                 {/* Desktop Full Table View */}
@@ -180,8 +187,18 @@ export default function Dashboard({
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onPreviewPhotos={handlePreviewPhotos}
+                    onViewDetail={handleViewDetail}
                 />
             </main>
+
+            {/* Ticket Full Detail Modal */}
+            <TicketDetailDialog
+                isOpen={Boolean(detailTicket)}
+                onClose={() => setDetailTicket(null)}
+                ticket={detailTicket}
+                onEdit={handleEdit}
+                onPreviewPhotos={handlePreviewPhotos}
+            />
 
             {/* Create / Edit Ticket Modal */}
             <TicketDialog

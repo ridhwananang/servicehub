@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Concerns\HandlesAvatarUpload;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    use HandlesAvatarUpload;
+
     /**
      * Show the user's profile settings page.
      */
@@ -30,15 +33,29 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->boolean('remove_avatar')) {
+            $this->deleteAvatar($user->avatar);
+            $user->avatar = null;
+        } elseif ($request->hasFile('avatar')) {
+            $this->deleteAvatar($user->avatar);
+            $user->avatar = $this->uploadAvatar($request->file('avatar'));
         }
 
-        $request->user()->save();
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profil berhasil diperbarui.')]);
 
         return to_route('profile.edit');
     }

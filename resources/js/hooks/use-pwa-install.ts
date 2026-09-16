@@ -8,18 +8,45 @@ interface BeforeInstallPromptEvent extends Event {
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isInstallable, setIsInstallable] = useState(false);
-    const [isInstalled, setIsInstalled] = useState(false);
+    const [isInstalled, setIsInstalled] = useState<boolean>(true);
+    const [isMounted, setIsMounted] = useState<boolean>(false);
     const [isIOS, setIsIOS] = useState(false);
 
     useEffect(() => {
-        // Check if already running in standalone PWA window
-        const isStandalone =
-            window.matchMedia('(display-mode: standalone)').matches ||
-            (window.navigator as any).standalone === true ||
-            document.referrer.includes('android-app://');
+        setIsMounted(true);
 
-        if (isStandalone) {
-            setIsInstalled(true);
+        // Check if already running in standalone PWA window or stored in localStorage
+        const checkIsInstalled = (): boolean => {
+            try {
+                if (localStorage.getItem('pwa_installed') === 'true') return true;
+            } catch {}
+            if (window.matchMedia('(display-mode: standalone)').matches) return true;
+            if ((window.navigator as any).standalone === true) return true;
+            if (document.referrer.includes('android-app://')) return true;
+            return false;
+        };
+
+        const installed = checkIsInstalled();
+        setIsInstalled(installed);
+        if (installed) {
+            try {
+                localStorage.setItem('pwa_installed', 'true');
+            } catch {}
+        }
+
+        // Check Chromium getInstalledRelatedApps API if available
+        if ('getInstalledRelatedApps' in navigator) {
+            (navigator as any)
+                .getInstalledRelatedApps()
+                .then((relatedApps: any[]) => {
+                    if (relatedApps && relatedApps.length > 0) {
+                        setIsInstalled(true);
+                        try {
+                            localStorage.setItem('pwa_installed', 'true');
+                        } catch {}
+                    }
+                })
+                .catch(() => {});
         }
 
         // Check if iOS Safari
@@ -37,6 +64,9 @@ export function usePwaInstall() {
             setIsInstalled(true);
             setIsInstallable(false);
             setDeferredPrompt(null);
+            try {
+                localStorage.setItem('pwa_installed', 'true');
+            } catch {}
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -47,6 +77,14 @@ export function usePwaInstall() {
             window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, []);
+
+    const markAsInstalled = () => {
+        setIsInstalled(true);
+        setIsInstallable(false);
+        try {
+            localStorage.setItem('pwa_installed', 'true');
+        } catch {}
+    };
 
     const promptInstall = async (): Promise<boolean> => {
         if (!deferredPrompt) {
@@ -60,6 +98,9 @@ export function usePwaInstall() {
             setIsInstalled(true);
             setIsInstallable(false);
             setDeferredPrompt(null);
+            try {
+                localStorage.setItem('pwa_installed', 'true');
+            } catch {}
             return true;
         }
 
@@ -69,7 +110,9 @@ export function usePwaInstall() {
     return {
         isInstallable,
         isInstalled,
+        isMounted,
         isIOS,
         promptInstall,
+        markAsInstalled,
     };
 }

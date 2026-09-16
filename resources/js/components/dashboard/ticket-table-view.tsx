@@ -38,7 +38,7 @@ export function TicketTableView({
         >
             <div className="overflow-x-auto custom-scrollbar pb-1">
                 <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                    <thead className="border-b border-zinc-200 bg-gradient-to-r from-zinc-50 via-zinc-100/70 to-zinc-50 text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:border-zinc-800 dark:bg-gradient-to-r dark:from-zinc-950/90 dark:via-zinc-900/90 dark:to-zinc-950/90 dark:text-zinc-400">
+                    <thead className="border-b border-red-950/40 bg-gradient-to-r from-zinc-950 via-red-600 to-zinc-950 text-[11px] font-bold uppercase tracking-wider text-white shadow-xs dark:border-zinc-800/80 dark:from-black dark:via-red-800 dark:to-black">
                         <tr>
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">NOTIF (UNIQUE)</th>
                             <th scope="col" className="px-3.5 py-3.5 whitespace-nowrap">NAMA PELANGGAN</th>

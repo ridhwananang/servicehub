@@ -13,7 +13,7 @@ import {
     Wrench,
     ZoomIn,
 } from 'lucide-react';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import DeleteUser from '@/components/delete-user';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -102,9 +102,6 @@ export default function Profile({
         post('/settings/profile', {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Profil berhasil diperbarui!');
-            },
             onError: () => {
                 toast.error('Gagal memperbarui profil. Periksa data yang Anda masukkan.');
             },
@@ -114,7 +111,6 @@ export default function Profile({
     return (
         <div className="min-h-screen bg-slate-50/70 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
             <Head title="Profil Saya - Aquos Platinum" />
-            <Toaster position="top-right" richColors />
 
             {/* Standalone Header Nav matching Aquos Platinum Branding */}
             <header className="sticky top-0 z-40 border-b border-red-500/40 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-md backdrop-blur-md dark:border-red-800/60 dark:from-red-950 dark:via-red-900 dark:to-red-950">

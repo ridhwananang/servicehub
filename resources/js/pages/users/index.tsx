@@ -23,7 +23,7 @@ import {
     X,
     ZoomIn,
 } from 'lucide-react';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -258,7 +258,6 @@ export default function UsersIndex({
     return (
         <div className="min-h-screen bg-slate-50/70 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
             <Head title="Manajemen Pengguna - Aquos Platinum" />
-            <Toaster position="top-right" richColors />
 
             {/* Top Bar Header */}
             <header className="sticky top-0 z-40 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 dark:from-red-950 dark:via-red-900 dark:to-red-950 text-white shadow-lg shadow-red-950/20 border-b border-red-500/40 dark:border-red-800/60 backdrop-blur-md">

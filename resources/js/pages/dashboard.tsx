@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import { Head, usePage } from '@inertiajs/react';
-import { Toaster } from 'sonner';
 import { TicketDialog } from '@/components/ticket-dialog';
 import { PhotoPreviewDialog } from '@/components/photo-preview-dialog';
 import {
@@ -123,7 +122,6 @@ export default function Dashboard({
     return (
         <div className="min-h-screen bg-slate-50/60 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
             <Head title="Aquos Platinum - Dashboard Tiket Servis & Pengerjaan" />
-            <Toaster position="top-right" richColors />
 
             {/* Standalone Header Nav */}
             <HeaderNav

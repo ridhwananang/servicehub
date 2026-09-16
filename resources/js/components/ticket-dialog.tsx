@@ -214,12 +214,24 @@ export function TicketDialog({
         if (isEdit && ticketToEdit) {
             post(`/tickets/${ticketToEdit.id}?_method=PUT`, {
                 forceFormData: true,
-                onSuccess: () => onClose(),
+                onSuccess: () => {
+                    toast.success(`Tiket ${ticketToEdit.notif_number} berhasil diperbarui`);
+                    onClose();
+                },
+                onError: () => {
+                    toast.error('Gagal memperbarui tiket servis. Periksa isian formulir.');
+                },
             });
         } else {
             post('/tickets', {
                 forceFormData: true,
-                onSuccess: () => onClose(),
+                onSuccess: () => {
+                    toast.success('Tiket servis baru berhasil ditambahkan');
+                    onClose();
+                },
+                onError: () => {
+                    toast.error('Gagal menambahkan tiket servis. Periksa isian formulir.');
+                },
             });
         }
     };

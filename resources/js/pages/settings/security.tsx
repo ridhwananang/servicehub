@@ -10,7 +10,6 @@ import {
     Sparkles,
     User as UserIcon,
 } from 'lucide-react';
-import { Toaster } from 'sonner';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -35,7 +34,6 @@ export default function Security(props: Props) {
     return (
         <div className="min-h-screen bg-slate-50/70 font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100">
             <Head title="Keamanan & Sandi - Aquos Platinum" />
-            <Toaster position="top-right" richColors />
 
             {/* Standalone Header Nav matching Aquos Platinum Branding */}
             <header className="sticky top-0 z-40 border-b border-red-500/40 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-md backdrop-blur-md dark:border-red-800/60 dark:from-red-950 dark:via-red-900 dark:to-red-950">

@@ -7,6 +7,7 @@ import type { ViewMode } from '@/hooks/use-ticket-filters';
 interface TicketCardsViewProps {
     tickets: ServiceTicket[];
     viewMode: ViewMode;
+    canDelete?: boolean;
     onEdit: (ticket: ServiceTicket) => void;
     onDelete: (ticket: ServiceTicket) => void;
     onPreviewPhotos: (ticket: ServiceTicket) => void;
@@ -16,6 +17,7 @@ interface TicketCardsViewProps {
 export function TicketCardsView({
     tickets,
     viewMode,
+    canDelete = true,
     onEdit,
     onDelete,
     onPreviewPhotos,
@@ -49,6 +51,7 @@ export function TicketCardsView({
                     <TicketCardItem
                         key={ticket.id}
                         ticket={ticket}
+                        canDelete={canDelete}
                         onEdit={onEdit}
                         onDelete={onDelete}
                         onPreviewPhotos={onPreviewPhotos}

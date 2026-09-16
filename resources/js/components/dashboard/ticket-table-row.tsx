@@ -7,6 +7,7 @@ import type { ServiceTicket } from '@/types';
 
 interface TicketTableRowProps {
     ticket: ServiceTicket;
+    canDelete?: boolean;
     onEdit: (ticket: ServiceTicket) => void;
     onDelete: (ticket: ServiceTicket) => void;
     onPreviewPhotos: (ticket: ServiceTicket) => void;
@@ -111,6 +112,7 @@ function formatDate(dateStr?: string | null): string {
 
 export const TicketTableRow = React.memo(function TicketTableRow({
     ticket,
+    canDelete = true,
     onEdit,
     onDelete,
     onPreviewPhotos,
@@ -339,17 +341,19 @@ export const TicketTableRow = React.memo(function TicketTableRow({
                     >
                         <Edit2 className="size-3.5" aria-hidden="true" />
                     </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDelete(ticket)}
-                        title={`Hapus tiket ${ticket.notif_number}`}
-                        aria-label={`Hapus tiket ${ticket.notif_number}`}
-                        className="size-8 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
-                    >
-                        <Trash2 className="size-3.5" aria-hidden="true" />
-                    </Button>
+                    {canDelete && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDelete(ticket)}
+                            title={`Hapus tiket ${ticket.notif_number}`}
+                            aria-label={`Hapus tiket ${ticket.notif_number}`}
+                            className="size-8 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
+                        >
+                            <Trash2 className="size-3.5" aria-hidden="true" />
+                        </Button>
+                    )}
                 </div>
             </td>
         </tr>

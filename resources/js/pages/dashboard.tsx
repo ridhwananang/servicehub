@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Toaster } from 'sonner';
 import { TicketDialog } from '@/components/ticket-dialog';
 import { PhotoPreviewDialog } from '@/components/photo-preview-dialog';
@@ -13,7 +13,7 @@ import {
     TicketDetailDialog,
 } from '@/components/dashboard';
 import { useTicketFilters } from '@/hooks/use-ticket-filters';
-import type { ServiceTicket, TicketStats, TicketFilters } from '@/types';
+import type { ServiceTicket, TicketStats, TicketFilters, User } from '@/types';
 
 interface DashboardProps {
     tickets: ServiceTicket[];
@@ -38,6 +38,9 @@ export default function Dashboard({
     },
     filters,
 }: DashboardProps) {
+    const { auth } = usePage<{ auth?: { user?: User } }>().props;
+    const canDelete = auth?.user?.role === 'admin';
+
     // Modal states
     const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
     const [ticketToEdit, setTicketToEdit] = useState<ServiceTicket | null>(null);
@@ -84,8 +87,9 @@ export default function Dashboard({
     }, []);
 
     const handleDelete = useCallback((ticket: ServiceTicket) => {
+        if (!canDelete) return;
         setTicketToDelete(ticket);
-    }, []);
+    }, [canDelete]);
 
     const handleExport = useCallback(() => {
         const params = new URLSearchParams();
@@ -174,6 +178,7 @@ export default function Dashboard({
                 <TicketCardsView
                     tickets={filteredTickets}
                     viewMode={viewMode}
+                    canDelete={canDelete}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onPreviewPhotos={handlePreviewPhotos}
@@ -184,6 +189,7 @@ export default function Dashboard({
                 <TicketTableView
                     tickets={filteredTickets}
                     viewMode={viewMode}
+                    canDelete={canDelete}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onPreviewPhotos={handlePreviewPhotos}
@@ -215,10 +221,12 @@ export default function Dashboard({
             />
 
             {/* Delete Ticket Confirmation Modal */}
-            <DeleteTicketDialog
-                ticket={ticketToDelete}
-                onClose={() => setTicketToDelete(null)}
-            />
+            {canDelete && (
+                <DeleteTicketDialog
+                    ticket={ticketToDelete}
+                    onClose={() => setTicketToDelete(null)}
+                />
+            )}
         </div>
     );
 }

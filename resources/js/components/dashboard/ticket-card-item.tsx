@@ -21,6 +21,7 @@ import type { ServiceTicket } from '@/types';
 
 interface TicketCardItemProps {
     ticket: ServiceTicket;
+    canDelete?: boolean;
     onEdit: (ticket: ServiceTicket) => void;
     onDelete: (ticket: ServiceTicket) => void;
     onPreviewPhotos: (ticket: ServiceTicket) => void;
@@ -43,6 +44,7 @@ function formatDate(dateStr?: string | null): string {
 
 export const TicketCardItem = React.memo(function TicketCardItem({
     ticket,
+    canDelete = true,
     onEdit,
     onDelete,
     onPreviewPhotos,
@@ -277,17 +279,19 @@ export const TicketCardItem = React.memo(function TicketCardItem({
                             <Edit2 className="size-4 sm:size-3.5" aria-hidden="true" />
                         </Button>
 
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => onDelete(ticket)}
-                            aria-label={`Hapus tiket ${ticket.notif_number}`}
-                            title="Hapus Tiket"
-                            className="size-9 sm:size-8 rounded-xl sm:rounded-lg border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 dark:text-zinc-400 dark:hover:bg-red-950/50 dark:hover:text-red-400 cursor-pointer active:scale-95 transition-all"
-                        >
-                            <Trash2 className="size-4 sm:size-3.5" aria-hidden="true" />
-                        </Button>
+                        {canDelete && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => onDelete(ticket)}
+                                aria-label={`Hapus tiket ${ticket.notif_number}`}
+                                title="Hapus Tiket"
+                                className="size-9 sm:size-8 rounded-xl sm:rounded-lg border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 dark:text-zinc-400 dark:hover:bg-red-950/50 dark:hover:text-red-400 cursor-pointer active:scale-95 transition-all"
+                            >
+                                <Trash2 className="size-4 sm:size-3.5" aria-hidden="true" />
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

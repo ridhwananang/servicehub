@@ -141,9 +141,9 @@ test('user can update a ticket', function () {
     ]);
 });
 
-test('user can delete a ticket', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
+test('admin can delete a ticket', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
 
     $ticket = ServiceTicket::create([
         'notif_number' => 'NTF-DEL-200',
@@ -160,6 +160,29 @@ test('user can delete a ticket', function () {
     $response->assertRedirect();
 
     $this->assertDatabaseMissing('service_tickets', [
+        'id' => $ticket->id,
+    ]);
+});
+
+test('teknisi cannot delete a ticket', function () {
+    $teknisi = User::factory()->teknisi()->create();
+    $this->actingAs($teknisi);
+
+    $ticket = ServiceTicket::create([
+        'notif_number' => 'NTF-DEL-201',
+        'customer_name' => 'Cannot Delete Me',
+        'customer_phone' => '0812345678',
+        'unit_model' => 'Dispenser',
+        'serial_number' => 'DSP-201',
+        'status' => 'berbayar',
+        'work_types' => ['Service Minor'],
+        'mainwork_center' => 'Pulogadung',
+    ]);
+
+    $response = $this->delete(route('tickets.destroy', $ticket));
+    $response->assertForbidden();
+
+    $this->assertDatabaseHas('service_tickets', [
         'id' => $ticket->id,
     ]);
 });

@@ -170,8 +170,10 @@ class ServiceTicketController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ServiceTicket $ticket)
+    public function destroy(Request $request, ServiceTicket $ticket)
     {
+        abort_if(! $request->user()?->isAdmin(), 403, 'Akses ditolak. Role teknisi tidak memiliki akses untuk menghapus data.');
+
         $ticket->delete();
 
         return redirect()->back()->with('success', 'Tiket Servis berhasil dihapus.');

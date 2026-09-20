@@ -78,6 +78,7 @@ class ServiceTicketController extends Controller
     public function store(StoreServiceTicketRequest $request)
     {
         $validated = $request->validated();
+        $validated['created_by'] = $request->user()?->id;
 
         if (empty($validated['service_date'])) {
             $validated['service_date'] = now()->toDateString();
@@ -215,6 +216,7 @@ class ServiceTicketController extends Controller
 
             fputcsv($file, [
                 'NOTIF (UNIQUE)',
+                'DIBUAT OLEH',
                 'DEADLINE',
                 'STATUS PENGERJAAN',
                 'TANGGAL PENGERJAAN',
@@ -238,9 +240,11 @@ class ServiceTicketController extends Controller
 
             foreach ($tickets as $t) {
                 $workTypesStr = is_array($t->work_types) ? implode(', ', $t->work_types) : '';
+                $creatorText = $t->creator ? "{$t->creator->name} (" . ucfirst($t->creator->role ?? 'teknisi') . ')' : 'Sistem';
 
                 fputcsv($file, [
                     $sanitize($t->notif_number),
+                    $sanitize($creatorText),
                     $t->deadline ? date('Y-m-d', strtotime($t->deadline)) : ($t->service_date ? date('Y-m-d', strtotime($t->service_date)) : '-'),
                     $t->work_status === 'selesai' ? 'Selesai' : 'Belum Selesai',
                     $t->service_date ? date('Y-m-d', strtotime($t->service_date)) : '-',
@@ -274,7 +278,7 @@ class ServiceTicketController extends Controller
      */
     protected function buildFilteredQuery(Request $request)
     {
-        $query = ServiceTicket::query();
+        $query = ServiceTicket::query()->with('creator:id,name,role,avatar');
 
         // Search Filter
         if ($search = $request->input('search')) {

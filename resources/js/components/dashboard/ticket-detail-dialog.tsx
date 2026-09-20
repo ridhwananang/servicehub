@@ -478,6 +478,14 @@ export function TicketDetailDialog({
                     {/* 8. Audit Trail / Metadata */}
                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400 border-t border-zinc-200 dark:border-zinc-800 pt-3 px-1">
                         <div>
+                            <span>Dibuat oleh: </span>
+                            <strong className="text-zinc-600 dark:text-zinc-300">
+                                {ticket.creator
+                                    ? `${ticket.creator.name} (${ticket.creator.role || 'teknisi'})`
+                                    : 'Sistem'}
+                            </strong>
+                        </div>
+                        <div>
                             <span>Dibuat pada: </span>
                             <strong className="text-zinc-600 dark:text-zinc-300">{formatDateTime(ticket.created_at)}</strong>
                         </div>

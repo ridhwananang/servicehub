@@ -45,9 +45,13 @@ test('user can create a ticket with multi-select work types and custom text', fu
         'notif_number' => 'NTF-TEST-9999',
         'customer_name' => 'Bambang Sudiro',
         'other_work_text' => 'Pemasangan stop kontak water proof',
+        'created_by' => $user->id,
     ]);
 
     $ticket = ServiceTicket::where('notif_number', 'NTF-TEST-9999')->first();
+    expect($ticket->created_by)->toBe($user->id);
+    expect($ticket->creator)->not->toBeNull();
+    expect($ticket->creator->id)->toBe($user->id);
     expect($ticket->work_types)->toContain('Install Standart');
     expect($ticket->work_types)->toContain('Install Bracket');
     expect($ticket->work_types)->toContain('Lain-lain');
@@ -207,8 +211,30 @@ test('user can export tickets to xlsx format with csv formula mitigation', funct
     $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
 
     $content = $response->streamedContent();
+    expect($content)->toContain('DIBUAT OLEH');
     expect($content)->toContain("'=1+1");
     expect($content)->toContain("'+FormulaName");
+});
+
+test('ticket has creator relationship and creator can be accessed', function () {
+    $user = User::factory()->create(['name' => 'Teknisi Handal', 'role' => 'teknisi']);
+    $ticket = ServiceTicket::create([
+        'created_by' => $user->id,
+        'notif_number' => 'NTF-CREATOR-01',
+        'customer_name' => 'Pelanggan Uji',
+        'customer_phone' => '0812345678',
+        'unit_model' => 'Kulkas 1 Pintu',
+        'serial_number' => 'KLK-001',
+        'status' => 'berbayar',
+        'work_types' => ['Service Minor'],
+        'mainwork_center' => 'Pulogadung',
+    ]);
+
+    expect($ticket->creator)->not->toBeNull();
+    expect($ticket->creator->id)->toBe($user->id);
+    expect($ticket->creator->name)->toBe('Teknisi Handal');
+    expect($user->createdTickets)->toHaveCount(1);
+    expect($user->createdTickets->first()->id)->toBe($ticket->id);
 });
 
 test('user can filter tickets by month on dashboard', function () {

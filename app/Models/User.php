@@ -65,4 +65,12 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->role === 'teknisi';
     }
+
+    /**
+     * Get the service tickets created by the user.
+     */
+    public function createdTickets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ServiceTicket::class, 'created_by');
+    }
 }

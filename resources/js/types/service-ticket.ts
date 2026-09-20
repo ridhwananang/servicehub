@@ -9,6 +9,13 @@ export type WorkTypeOption =
 
 export interface ServiceTicket {
     id: number;
+    created_by?: number | null;
+    creator?: {
+        id: number;
+        name: string;
+        role?: string;
+        avatar?: string | null;
+    } | null;
     notif_number: string;
     customer_name: string;
     customer_phone: string;

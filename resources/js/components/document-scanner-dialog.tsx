@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -26,6 +26,9 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
+    X,
+    Maximize2,
+    Minimize2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createWorker } from "tesseract.js";
@@ -141,19 +144,68 @@ export function DocumentScannerDialog({
     const [setAsVisitPhoto, setSetAsVisitPhoto] = useState<boolean>(true);
 
     // Camera stream states
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+    const cameraContainerRef = useRef<HTMLDivElement>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
     const [cameraFacing, setCameraFacing] = useState<"environment" | "user">(
         "environment",
     );
     const [cameraError, setCameraError] = useState<string | null>(null);
+    const [isNativeFullscreen, setIsNativeFullscreen] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const stopCamera = useCallback(() => {
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+            mediaStreamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+    }, []);
+
+    const attachVideoRef = useCallback((node: HTMLVideoElement | null) => {
+        videoRef.current = node;
+        if (
+            node &&
+            mediaStreamRef.current &&
+            node.srcObject !== mediaStreamRef.current
+        ) {
+            node.srcObject = mediaStreamRef.current;
+            node.play().catch(() => {});
+        }
+    }, []);
+
+    const exitFullscreenIfActive = useCallback(async () => {
+        if (typeof document !== "undefined" && document.fullscreenElement) {
+            try {
+                await document.exitFullscreen();
+            } catch {
+                // Ignore fullscreen exit errors
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsNativeFullscreen(Boolean(document.fullscreenElement));
+        };
+
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => {
+            document.removeEventListener(
+                "fullscreenchange",
+                handleFullscreenChange,
+            );
+        };
+    }, []);
 
     // Reset states when closed
     useEffect(() => {
         if (!isOpen) {
             stopCamera();
+            exitFullscreenIfActive();
             setStep("select");
             setImageFile(null);
             setImagePreview(null);
@@ -162,32 +214,45 @@ export function DocumentScannerDialog({
             setParsedData(null);
             setCameraError(null);
         }
-    }, [isOpen]);
+
+        return () => {
+            stopCamera();
+        };
+    }, [isOpen, stopCamera, exitFullscreenIfActive]);
 
     // Start camera stream
     const startCamera = async (
         facing: "environment" | "user" = "environment",
     ) => {
+        stopCamera();
         setCameraError(null);
         setStep("camera");
         try {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach((track) => track.stop());
+            if (
+                !navigator.mediaDevices ||
+                !navigator.mediaDevices.getUserMedia
+            ) {
+                throw new Error(
+                    "Fitur kamera browser tidak didukung pada peramban ini.",
+                );
             }
 
+            const isPortrait =
+                typeof window !== "undefined" &&
+                window.innerHeight > window.innerWidth;
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: facing },
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
+                    width: { ideal: isPortrait ? 1080 : 1920 },
+                    height: { ideal: isPortrait ? 1920 : 1080 },
                 },
                 audio: false,
             });
 
-            setMediaStream(stream);
+            mediaStreamRef.current = stream;
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
-                await videoRef.current.play();
+                videoRef.current.play().catch(() => {});
             }
         } catch (err: any) {
             console.error("Camera access error:", err);
@@ -197,10 +262,17 @@ export function DocumentScannerDialog({
         }
     };
 
-    const stopCamera = () => {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach((track) => track.stop());
-            setMediaStream(null);
+    const toggleNativeFullscreen = async () => {
+        if (!cameraContainerRef.current || typeof document === "undefined")
+            return;
+        try {
+            if (!document.fullscreenElement) {
+                await cameraContainerRef.current.requestFullscreen();
+            } else {
+                await document.exitFullscreen();
+            }
+        } catch {
+            // CSS 100dvh fills device viewport when native fullscreen is blocked
         }
     };
 
@@ -221,6 +293,10 @@ export function DocumentScannerDialog({
         const ctx = canvas.getContext("2d");
 
         if (ctx) {
+            if (cameraFacing === "user") {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             canvas.toBlob(
                 async (blob) => {
@@ -233,6 +309,7 @@ export function DocumentScannerDialog({
                             },
                         );
                         stopCamera();
+                        await exitFullscreenIfActive();
                         processDocumentImage(file);
                     }
                 },
@@ -242,11 +319,21 @@ export function DocumentScannerDialog({
         }
     };
 
-    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelected = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            stopCamera();
+            await exitFullscreenIfActive();
             processDocumentImage(file);
         }
+    };
+
+    const handleClose = async () => {
+        stopCamera();
+        await exitFullscreenIfActive();
+        onClose();
     };
 
     const processWithAi = async (
@@ -416,198 +503,291 @@ export function DocumentScannerDialog({
     const handleApplyData = () => {
         if (!parsedData) return;
         onApply(parsedData, setAsVisitPhoto ? imageFile : null);
-        onClose();
+        handleClose();
     };
 
+    const isCameraStep = step === "camera";
+    const canToggleNativeFullscreen =
+        typeof document !== "undefined" && Boolean(document.fullscreenEnabled);
+
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-2xl sm:max-w-3xl max-h-[92vh] overflow-y-auto custom-scrollbar p-0 sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl [&>button]:text-white/90 [&>button:hover]:text-white [&>button]:focus:ring-white [&>button]:z-20">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 dark:from-red-950 dark:via-red-900 dark:to-red-950 text-white p-5 pb-5 sm:p-6 sm:pb-6 relative overflow-hidden">
-                    <div className="flex items-center gap-2 mb-1.5">
-                        <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-xs font-semibold px-2 py-0.5 text-xs">
-                            AI & OCR Scanner
-                        </Badge>
-                        <span className="text-xs text-red-100 font-medium">
-                            Laporan Reparasi SHARP / Umum
-                        </span>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <DialogContent
+                ref={cameraContainerRef}
+                className={
+                    isCameraStep
+                        ? "fixed inset-0 top-0 left-0 translate-x-0 translate-y-0 z-50 flex flex-col w-screen h-dvh max-w-none sm:max-w-none max-h-dvh rounded-none border-0 p-0 gap-0 bg-black text-white shadow-none overflow-hidden [&>button]:hidden"
+                        : "max-w-2xl sm:max-w-3xl max-h-[92vh] overflow-y-auto custom-scrollbar p-0 sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl [&>button]:text-white/90 [&>button:hover]:text-white [&>button]:focus:ring-white [&>button]:z-20"
+                }
+            >
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelected}
+                    className="hidden"
+                />
+
+                {/* Header (Non-camera steps) */}
+                {!isCameraStep && (
+                    <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 dark:from-red-950 dark:via-red-900 dark:to-red-950 text-white p-5 pb-5 sm:p-6 sm:pb-6 relative overflow-hidden">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-xs font-semibold px-2 py-0.5 text-xs">
+                                AI & OCR Scanner
+                            </Badge>
+                            <span className="text-xs text-red-100 font-medium">
+                                Laporan Reparasi SHARP / Umum
+                            </span>
+                        </div>
+                        <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-white drop-shadow-xs">
+                            Scan & Baca Dokumen Servis
+                        </DialogTitle>
+                        <DialogDescription className="text-xs sm:text-sm text-red-100 mt-1">
+                            Foto lembar dokumen pengerjaan fisik atau unggah gambar
+                            untuk mengisi data formulir secara otomatis.
+                        </DialogDescription>
                     </div>
-                    <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-white drop-shadow-xs">
-                        Scan & Baca Dokumen Servis
-                    </DialogTitle>
-                    <DialogDescription className="text-xs sm:text-sm text-red-100 mt-1">
-                        Foto lembar dokumen pengerjaan fisik atau unggah gambar
-                        untuk mengisi data formulir secara otomatis.
-                    </DialogDescription>
-                </div>
+                )}
 
-                {/* Body Content based on Step */}
-                <div className="p-4 sm:p-6">
-                    {/* STEP 1: Select Input Method */}
-                    {step === "select" && (
-                        <div className="space-y-4 sm:space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Option 1: Kamera Langsung */}
-                                <button
-                                    type="button"
-                                    onClick={() => startCamera("environment")}
-                                    className="flex flex-col items-center justify-center gap-3 p-6 sm:p-8 rounded-2xl border-2 border-dashed border-red-300 hover:border-red-600 bg-red-50/50 hover:bg-red-50/90 dark:border-red-800/80 dark:bg-red-950/30 dark:hover:bg-red-950/60 transition-all cursor-pointer group active:scale-[0.98]"
-                                >
-                                    <div className="size-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:scale-110 transition-transform">
-                                        <Camera className="size-7" />
-                                    </div>
-                                    <div className="text-center">
-                                        <span className="text-base font-bold text-slate-900 dark:text-white block">
-                                            Ambil Foto dengan Kamera
-                                        </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-                                            Arahkan kamera ponsel/laptop
-                                            langsung ke lembar kertas
-                                        </span>
-                                    </div>
-                                </button>
+                {/* STEP 2: Full-Screen Active Camera Viewfinder */}
+                {isCameraStep && (
+                    <div className="relative flex-1 w-full h-full overflow-hidden bg-black flex items-center justify-center">
+                        <DialogDescription className="sr-only">
+                            Tampilan kamera layar penuh untuk memindai dokumen servis.
+                        </DialogDescription>
 
-                                {/* Option 2: Upload File / Galeri */}
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        fileInputRef.current?.click()
-                                    }
-                                    className="flex flex-col items-center justify-center gap-3 p-6 sm:p-8 rounded-2xl border-2 border-dashed border-slate-300 hover:border-slate-500 bg-slate-50/60 hover:bg-slate-100/80 dark:border-slate-700 dark:bg-slate-800/30 dark:hover:bg-slate-800/60 transition-all cursor-pointer group active:scale-[0.98]"
-                                >
-                                    <div className="size-14 rounded-2xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shadow-lg shadow-black/20 group-hover:scale-110 transition-transform">
-                                        <Upload className="size-7" />
-                                    </div>
-                                    <div className="text-center">
-                                        <span className="text-base font-bold text-slate-900 dark:text-white block">
-                                            Pilih dari Galeri / File
-                                        </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-                                            Unggah foto JPG, PNG, atau scan
-                                            tanda terima reparasi
-                                        </span>
-                                    </div>
-                                </button>
-
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileSelected}
-                                    className="hidden"
+                        {!cameraError ? (
+                            <>
+                                <video
+                                    ref={attachVideoRef}
+                                    autoPlay
+                                    playsInline
+                                    muted
+                                    className={`h-full w-full object-cover ${cameraFacing === "user" ? "-scale-x-100" : ""}`}
                                 />
-                            </div>
 
-                            {/* Tips Card */}
-                            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 flex items-start gap-2.5">
-                                <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                                <div>
-                                    <strong className="font-semibold block mb-0.5 text-amber-900 dark:text-amber-200">
-                                        Tips Hasil Scan Maksimal:
-                                    </strong>
-                                    <span>
-                                        Pastikan pencahayaan cukup terang, teks
-                                        tidak blur, dan seluruh nomor
-                                        notifikasi, nama konsumen, model unit,
-                                        serta alamat terlihat jelas di dalam
-                                        bingkai foto.
+                                {/* Document alignment guide overlay */}
+                                <div className="absolute top-20 bottom-28 inset-x-4 sm:inset-x-12 md:inset-x-20 border-2 border-dashed border-red-500/80 rounded-2xl pointer-events-none flex flex-col justify-between p-3 sm:p-5">
+                                    <span className="text-[11px] font-mono text-white/95 bg-black/70 px-2.5 py-1 rounded-md self-start backdrop-blur-xs border border-white/10">
+                                        Posisikan Lembar Dokumen di dalam Kotak
+                                    </span>
+                                    <span className="text-[11px] font-mono text-white/95 bg-black/70 px-2.5 py-1 rounded-md self-end backdrop-blur-xs border border-white/10">
+                                        Laporan Reparasi
                                     </span>
                                 </div>
+                            </>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center p-6 text-center space-y-4 max-w-md mx-auto">
+                                <div className="size-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+                                    <AlertCircle className="size-8 text-red-400" />
+                                </div>
+                                <p className="text-sm text-slate-200 leading-relaxed">
+                                    {cameraError}
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-2.5">
+                                    <Button
+                                        type="button"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                        className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-semibold rounded-xl px-5 h-11 cursor-pointer"
+                                    >
+                                        <Upload className="size-4 mr-2" />
+                                        Pilih File Gambar
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={async () => {
+                                            stopCamera();
+                                            await exitFullscreenIfActive();
+                                            setStep("select");
+                                        }}
+                                        className="text-xs sm:text-sm rounded-xl h-11 px-4 border-white/25 bg-black/55 text-white hover:bg-white/15 hover:text-white cursor-pointer"
+                                    >
+                                        Kembali
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Floating Top Bar */}
+                        <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between gap-3 px-4 sm:px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        stopCamera();
+                                        await exitFullscreenIfActive();
+                                        setStep("select");
+                                    }}
+                                    title="Kembali"
+                                    aria-label="Kembali"
+                                    className="size-10 rounded-full bg-black/55 hover:bg-black/80 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer shrink-0"
+                                >
+                                    <X className="size-5" />
+                                </button>
+                                <DialogTitle className="text-sm sm:text-base font-bold text-white flex items-center gap-2 truncate drop-shadow-xs">
+                                    <ScanLine className="size-4 text-red-400 shrink-0" />
+                                    <span className="truncate">
+                                        Pindai Dokumen Servis
+                                    </span>
+                                </DialogTitle>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                {canToggleNativeFullscreen && (
+                                    <button
+                                        type="button"
+                                        onClick={toggleNativeFullscreen}
+                                        title={
+                                            isNativeFullscreen
+                                                ? "Keluar Layar Penuh"
+                                                : "Layar Penuh"
+                                        }
+                                        aria-label={
+                                            isNativeFullscreen
+                                                ? "Keluar Layar Penuh"
+                                                : "Layar Penuh"
+                                        }
+                                        className="size-10 rounded-full bg-black/55 hover:bg-black/80 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+                                    >
+                                        {isNativeFullscreen ? (
+                                            <Minimize2 className="size-4" />
+                                        ) : (
+                                            <Maximize2 className="size-4" />
+                                        )}
+                                    </button>
+                                )}
+
+                                {!cameraError && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSwitchCamera}
+                                        title="Ganti Kamera Depan/Belakang"
+                                        aria-label="Ganti Kamera Depan/Belakang"
+                                        className="size-10 rounded-full bg-black/55 hover:bg-black/80 border border-white/15 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+                                    >
+                                        <SwitchCamera className="size-5" />
+                                    </button>
+                                )}
                             </div>
                         </div>
-                    )}
 
-                    {/* STEP 2: Active Camera Viewfinder */}
-                    {step === "camera" && (
-                        <div className="space-y-4">
-                            {cameraError ? (
-                                <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-center text-xs text-red-700 dark:border-red-800 dark:bg-red-950/60 dark:text-red-300 space-y-3">
-                                    <AlertCircle className="size-8 text-red-500 mx-auto" />
-                                    <p>{cameraError}</p>
-                                    <div className="flex justify-center gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() =>
-                                                fileInputRef.current?.click()
-                                            }
-                                            className="text-xs border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            <Upload className="size-3.5 mr-1" />
-                                            Pilih File Gambar
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => setStep("select")}
-                                            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                                        >
-                                            Kembali
-                                        </Button>
-                                    </div>
+                        {/* Floating Bottom Controls */}
+                        {!cameraError && (
+                            <div className="absolute bottom-0 inset-x-0 z-20 px-4 sm:px-8 pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/85 via-black/50 to-transparent">
+                                <div className="mx-auto max-w-xl flex items-center justify-between gap-3">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                        className="text-xs rounded-full h-10 px-3.5 sm:px-4 border-white/25 bg-black/55 text-white hover:bg-white/15 hover:text-white backdrop-blur-md cursor-pointer"
+                                    >
+                                        <Upload className="size-3.5 mr-1.5" />
+                                        Galeri
+                                    </Button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleCaptureFromCamera}
+                                        title="Ambil & Pindai"
+                                        aria-label="Ambil & Pindai"
+                                        className="group relative size-18 sm:size-20 rounded-full border-4 border-white bg-white/15 p-1.5 flex items-center justify-center shadow-2xl transition-transform active:scale-90 cursor-pointer"
+                                    >
+                                        <span className="size-full rounded-full bg-red-600 group-hover:bg-red-500 transition-colors flex items-center justify-center">
+                                            <Camera className="size-6 text-white" />
+                                        </span>
+                                    </button>
+
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        onClick={async () => {
+                                            stopCamera();
+                                            await exitFullscreenIfActive();
+                                            setStep("select");
+                                        }}
+                                        className="text-xs rounded-full h-10 px-4 bg-black/55 border border-white/20 text-white hover:bg-white/15 hover:text-white backdrop-blur-md cursor-pointer"
+                                    >
+                                        Batal
+                                    </Button>
                                 </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    <div className="relative aspect-[4/3] sm:aspect-video w-full rounded-2xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center">
-                                        <video
-                                            ref={videoRef}
-                                            autoPlay
-                                            playsInline
-                                            muted
-                                            className="w-full h-full object-cover"
-                                        />
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                                        {/* Document alignment guide overlay */}
-                                        <div className="absolute inset-4 sm:inset-8 border-2 border-dashed border-red-500/70 rounded-xl pointer-events-none flex flex-col justify-between p-2 sm:p-4">
-                                            <span className="text-[10px] font-mono text-white/90 bg-black/70 px-2 py-0.5 rounded self-start backdrop-blur-xs">
-                                                Posisikan Lembar Dokumen di
-                                                dalam Kotak
+                {/* Body Content based on Step (Non-camera steps) */}
+                {!isCameraStep && (
+                    <div className="p-4 sm:p-6">
+                        {/* STEP 1: Select Input Method */}
+                        {step === "select" && (
+                            <div className="space-y-4 sm:space-y-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {/* Option 1: Kamera Langsung */}
+                                    <button
+                                        type="button"
+                                        onClick={() => startCamera("environment")}
+                                        className="flex flex-col items-center justify-center gap-3 p-6 sm:p-8 rounded-2xl border-2 border-dashed border-red-300 hover:border-red-600 bg-red-50/50 hover:bg-red-50/90 dark:border-red-800/80 dark:bg-red-950/30 dark:hover:bg-red-950/60 transition-all cursor-pointer group active:scale-[0.98]"
+                                    >
+                                        <div className="size-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:scale-110 transition-transform">
+                                            <Camera className="size-7" />
+                                        </div>
+                                        <div className="text-center">
+                                            <span className="text-base font-bold text-slate-900 dark:text-white block">
+                                                Ambil Foto dengan Kamera
                                             </span>
-                                            <span className="text-[10px] font-mono text-white/90 bg-black/70 px-2 py-0.5 rounded self-end backdrop-blur-xs">
-                                                Laporan Reparasi
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+                                                Arahkan kamera ponsel/laptop
+                                                langsung ke lembar kertas
                                             </span>
                                         </div>
-                                    </div>
+                                    </button>
 
-                                    {/* Camera Controls */}
-                                    <div className="flex items-center justify-between gap-3 pt-1">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => {
-                                                stopCamera();
-                                                setStep("select");
-                                            }}
-                                            className="rounded-xl cursor-pointer border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            Batal
-                                        </Button>
+                                    {/* Option 2: Upload File / Galeri */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                        className="flex flex-col items-center justify-center gap-3 p-6 sm:p-8 rounded-2xl border-2 border-dashed border-slate-300 hover:border-slate-500 bg-slate-50/60 hover:bg-slate-100/80 dark:border-slate-700 dark:bg-slate-800/30 dark:hover:bg-slate-800/60 transition-all cursor-pointer group active:scale-[0.98]"
+                                    >
+                                        <div className="size-14 rounded-2xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shadow-lg shadow-black/20 group-hover:scale-110 transition-transform">
+                                            <Upload className="size-7" />
+                                        </div>
+                                        <div className="text-center">
+                                            <span className="text-base font-bold text-slate-900 dark:text-white block">
+                                                Pilih dari Galeri / File
+                                            </span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+                                                Unggah foto JPG, PNG, atau scan
+                                                tanda terima reparasi
+                                            </span>
+                                        </div>
+                                    </button>
+                                </div>
 
-                                        <Button
-                                            type="button"
-                                            onClick={handleCaptureFromCamera}
-                                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 py-2.5 font-bold flex items-center gap-2 shadow-lg shadow-red-600/30 cursor-pointer active:scale-95"
-                                        >
-                                            <Camera className="size-4" />
-                                            Ambil & Pindai
-                                        </Button>
-
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={handleSwitchCamera}
-                                            title="Ganti Kamera Depan/Belakang"
-                                            aria-label="Ganti Kamera"
-                                            className="rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            <SwitchCamera className="size-4" />
-                                        </Button>
+                                {/* Tips Card */}
+                                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 flex items-start gap-2.5">
+                                    <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                                    <div>
+                                        <strong className="font-semibold block mb-0.5 text-amber-900 dark:text-amber-200">
+                                            Tips Hasil Scan Maksimal:
+                                        </strong>
+                                        <span>
+                                            Pastikan pencahayaan cukup terang, teks
+                                            tidak blur, dan seluruh nomor
+                                            notifikasi, nama konsumen, model unit,
+                                            serta alamat terlihat jelas di dalam
+                                            bingkai foto.
+                                        </span>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                            </div>
+                        )}
 
                     {/* STEP 3: Processing / Loading OCR */}
                     {step === "processing" && (
@@ -942,28 +1122,29 @@ export function DocumentScannerDialog({
                                 </div>
                             </div>
 
-                            {/* Action Footer */}
-                            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between mt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={onClose}
-                                    className="rounded-xl cursor-pointer border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                >
-                                    Batal
-                                </Button>
+                                {/* Action Footer */}
+                                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between mt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleClose}
+                                        className="rounded-xl cursor-pointer border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    >
+                                        Batal
+                                    </Button>
 
-                                <Button
-                                    type="button"
-                                    onClick={handleApplyData}
-                                    className="bg-red-600 hover:bg-red-700 text-white rounded-xl gap-2 px-5 py-2 font-bold shadow-lg shadow-red-600/20 cursor-pointer active:scale-95"
-                                >
-                                    Terapkan ke Formulir
-                                </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={handleApplyData}
+                                        className="bg-red-600 hover:bg-red-700 text-white rounded-xl gap-2 px-5 py-2 font-bold shadow-lg shadow-red-600/20 cursor-pointer active:scale-95"
+                                    >
+                                        Terapkan ke Formulir
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );

@@ -120,26 +120,31 @@ class GeminiDocumentScanner implements DocumentScannerInterface
     {
         return <<<PROMPT
 Anda adalah asisten AI profesional untuk sistem Work Order teknisi servis elektronik (Aquos Platinum / Sharp Service Center Indonesia).
-Tugas Anda: Analisis foto dokumen atau struk laporan reparasi (work order / nota servis) yang diberikan, lalu ekstrak data ke format JSON sesuai skema.
+Tugas Anda: Analisis foto dokumen atau struk laporan reparasi (work order / nota servis) yang diberikan, lalu ekstrak setiap kolom dengan SANGAT TELITI ke format JSON sesuai skema.
+
+Aturan Penting Pemisahan Kolom:
+- Dokumen Laporan Reparasi SHARP sering berbentuk 2 kolom sejajar: kolom KIRI berisi data konsumen (Nama, Alamat, No. Telp) dan kolom KANAN berisi data unit (Model, No. Seri, Tgl Pembelian, Garansi). Jangan mencampurkan teks kolom kiri dan kanan.
+- JANGAN PERNAH memasukkan kode model produk (seperti 4T-C85HN7000X, 2T-C32BG1I, LC-..., AH-A5SAY, SJ-..., ES-...) ke dalam customer_name. customer_name HANYA untuk nama orang/perusahaan.
+- Jika terdapat format seperti "- Ibu Hj. Meni Malik - Alamat : Jl. Raya..." atau "Nama ... Alamat : ...", pisahkan: masukkan nama orang ke customer_name, dan masukkan HANYA alamat jalan/lokasi ke customer_address (hapus kata "Alamat :" dan nama pelanggan dari customer_address).
 
 Panduan Ekstraksi Data:
-1. notif_number: Nomor notifikasi unik / Nomor WO / No Laporan (contoh: 2026117562, NTF-2026-1234, atau format digit unik pada header struk).
-2. customer_name: Nama lengkap konsumen / pelanggan (bersihkan dari gelar seperti "BP", "IBU", kode konsumen, atau kata "Nama:").
-3. customer_phone: Nomor HP / WhatsApp konsumen (format angka, contoh: 08123456789).
-4. customer_address: Alamat lengkap pengerjaan servis (jalan, blok, nomor rumah, kelurahan, kecamatan, kota).
-5. unit_model: Tipe atau model unit yang diservis (contoh: AH-A5SAY, 4T-C50EJ2X, SJ-X165MG, dll).
+1. notif_number: Nomor notifikasi unik / Nomor WO / No Laporan (contoh: 2026117562, 202456677811, NTF-2026-1234).
+2. customer_name: Nama lengkap konsumen / pelanggan (nama orang/instansi saja, bukan kode model unit, bersihkan dari label "Nama:" atau kode konsumen).
+3. customer_phone: Nomor HP / WhatsApp konsumen (format digit angka bersih, contoh: 081234567890).
+4. customer_address: Alamat lengkap pengerjaan servis saja (jalan, nomor, blok, RT/RW, kelurahan, kecamatan, kota) tanpa nama pelanggan dan tanpa kata "Alamat:".
+5. unit_model: Tipe atau model unit yang diservis (contoh: 4T-C85HN7000X, AH-A5SAY, 4T-C50EJ2X, SJ-X165MG).
 6. serial_number: Nomor seri unit (SN / No. Seri).
-7. service_date: Tanggal kunjungan atau tanggal penerimaan dokumen (format YYYY-MM-DD).
-8. deadline: Tanggal batas pengerjaan (format YYYY-MM-DD, jika tidak ada samakan dengan service_date).
-9. status: Apakah servis ini 'berbayar' atau 'tidak_berbayar' (jika ada indikasi klaim garansi, garansi resmi, free biaya, gunakan 'tidak_berbayar'; jika ada biaya perbaikan, jasa, atau suku cadang, gunakan 'berbayar').
-10. status_note: Keterangan tambahan mengenai status pembayaran atau garansi jika ada.
+7. service_date: Tanggal kunjungan atau tanggal penerimaan dokumen format YYYY-MM-DD (konversi dari DD.MM.YYYY atau DD/MM/YYYY; jika tidak ada kosongkan "").
+8. deadline: Tanggal batas pengerjaan format YYYY-MM-DD (jika tidak ada samakan dengan service_date; jika tidak ada keduanya kosongkan "").
+9. status: Apakah servis ini 'berbayar' atau 'tidak_berbayar' (jika garansi, masih garansi, free klaim, gunakan 'tidak_berbayar'; jika ada biaya atau habis garansi, gunakan 'berbayar').
+10. status_note: Keterangan singkat mengenai status pembayaran atau garansi jika ada (misal: 'Garansi', 'Habis Garansi').
 11. work_status: 'selesai' jika dokumen menunjukkan pengerjaan beres, atau 'belum_selesai'.
-12. work_types: Daftar jenis pengerjaan (contoh: ["Perbaikan", "Ganti Kompresor", "Install Standart", "Bongkar Pasang", "Cuci AC"]).
-13. start_time: Jam mulai pengerjaan jika tertera (format HH:MM, contoh: 09:30).
-14. finish_time: Jam selesai pengerjaan jika tertera (format HH:MM, contoh: 11:00).
+12. work_types: Pilih dari daftar berikut jika cocok: ['Install Standart', 'Install Bracket', 'Penjelasan', 'Service Minor', 'Service Mayor', 'Penambahan', 'Lain-lain'].
+13. start_time: Jam mulai pengerjaan jika tertera (format HH:MM 24 jam, contoh: 09:30; kosongkan "" jika tidak ada).
+14. finish_time: Jam selesai pengerjaan jika tertera (format HH:MM 24 jam, contoh: 11:00; kosongkan "" jika tidak ada).
 15. notes: Catatan keluhan, gejala kerusakan, atau tindakan teknisi yang tertulis pada dokumen.
 
-Kembalikan nilai kosong (string kosong "" atau array kosong []) untuk bidang yang tidak ditemukan pada dokumen.
+Kembalikan nilai kosong (string kosong "" atau array kosong []) untuk bidang yang tidak ditemukan pada dokumen. Jangan mengarang data.
 PROMPT;
     }
 

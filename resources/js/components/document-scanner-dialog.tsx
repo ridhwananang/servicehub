@@ -456,7 +456,7 @@ export function DocumentScannerDialog({
         setOcrStatusText("Mengompresi dan mengoptimalkan gambar dokumen...");
 
         try {
-            const compressed = await compressImage(file);
+            const compressed = await compressImage(file, 2048, 2048, 0.9);
             setImageFile(compressed);
             const previewUrl = URL.createObjectURL(compressed);
             setImagePreview(previewUrl);
@@ -468,14 +468,17 @@ export function DocumentScannerDialog({
             if (isOnline) {
                 try {
                     result = await processWithAi(compressed);
-                    toast.success("Dokumen berhasil dianalisis!");
+                    toast.success("Dokumen berhasil dianalisis dengan AI!");
                 } catch (aiErr: any) {
                     console.warn(
                         "Cloud scan failed, fallback to local OCR:",
                         aiErr,
                     );
+                    toast.warning(
+                        `Scan AI gagal (${aiErr?.message || "gangguan layanan"}), beralih ke OCR lokal.`,
+                    );
                     setOcrStatusText(
-                        "Beralih ke pemindaian lokal...",
+                        "Beralih ke pemindaian lokal (Tesseract)...",
                     );
                     result = await processWithTesseract(file);
                 }
@@ -828,9 +831,19 @@ export function DocumentScannerDialog({
                                     <span className="text-sm font-bold text-slate-900 dark:text-white">
                                         Data Berhasil Dibaca dari Dokumen
                                     </span>
-                                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 flex items-center gap-1 font-semibold">
+                                    <Badge
+                                        className={
+                                            parsedData.provider === "tesseract"
+                                                ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 text-[10px] px-2 py-0.5 flex items-center gap-1 font-semibold"
+                                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 flex items-center gap-1 font-semibold"
+                                        }
+                                    >
                                         <Sparkles className="size-3" />
-                                        Otomatis Terverifikasi
+                                        {parsedData.provider === "gemini"
+                                            ? "Gemini AI"
+                                            : parsedData.provider === "groq"
+                                              ? "Groq AI"
+                                              : "OCR Lokal (Tesseract)"}
                                     </Badge>
                                 </div>
 

@@ -90,8 +90,9 @@ class GroqDocumentScanner implements DocumentScannerInterface
             }
 
             $jsonBody = $response->json();
-            $rawContent = $jsonBody['choices'][0]['message']['content'] ?? '{}';
-            $parsedArray = json_decode($rawContent, true);
+            $rawContent = (string) ($jsonBody['choices'][0]['message']['content'] ?? '{}');
+            $cleanJson = $this->extractJsonString($rawContent);
+            $parsedArray = json_decode($cleanJson, true);
 
             if (!is_array($parsedArray)) {
                 Log::error('Groq API returned non-JSON text despite json_object response format', [
@@ -115,34 +116,56 @@ class GroqDocumentScanner implements DocumentScannerInterface
     }
 
     /**
+     * Strip reasoning tags or markdown fences before JSON decoding.
+     */
+    protected function extractJsonString(string $content): string
+    {
+        $cleaned = preg_replace('/<think>[\s\S]*?<\/think>/i', '', $content) ?? $content;
+        $cleaned = trim($cleaned);
+        $cleaned = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', $cleaned) ?? $cleaned;
+        $cleaned = trim($cleaned);
+
+        if (json_decode($cleaned, true) === null && preg_match('/\{[\s\S]*\}/', $cleaned, $matches)) {
+            return $matches[0];
+        }
+
+        return $cleaned;
+    }
+
+    /**
      * Formulates system instructions for Indonesian electronic repair documents.
      */
     protected function buildSystemPrompt(): string
     {
         return <<<PROMPT
 Anda adalah asisten AI profesional untuk sistem Work Order teknisi servis elektronik (Aquos Platinum / Sharp Service Center Indonesia).
-Tugas Anda: Analisis foto dokumen atau struk laporan reparasi (work order / nota servis) yang diberikan, lalu ekstrak data ke format JSON.
+Tugas Anda: Analisis foto dokumen atau struk laporan reparasi (work order / nota servis) yang diberikan, lalu ekstrak setiap kolom dengan SANGAT TELITI ke format JSON.
+
+Aturan Penting Pemisahan Kolom:
+- Dokumen Laporan Reparasi SHARP sering berbentuk 2 kolom sejajar: kolom KIRI berisi data konsumen (Nama, Alamat, No. Telp) dan kolom KANAN berisi data unit (Model, No. Seri, Tgl Pembelian, Garansi). Jangan mencampurkan teks kolom kiri dan kanan.
+- JANGAN PERNAH memasukkan kode model produk (seperti 4T-C85HN7000X, 2T-C32BG1I, LC-..., AH-A5SAY, SJ-..., ES-...) ke dalam `customer_name`. `customer_name` HANYA untuk nama orang/perusahaan.
+- Jika terdapat format seperti "- Ibu Hj. Meni Malik - Alamat : Jl. Raya..." atau "Nama ... Alamat : ...", pisahkan: masukkan nama orang ke `customer_name`, dan masukkan HANYA alamat jalan/lokasi ke `customer_address` (hapus kata "Alamat :" dan nama pelanggan dari `customer_address`).
 
 Anda WAJIB mengembalikan sebuah objek JSON valid dengan struktur kunci berikut:
 {
-  "notif_number": "Nomor notifikasi unik / Nomor WO / No Laporan (contoh: 2026117562, NTF-2026-1234, atau digit unik pada header)",
-  "customer_name": "Nama lengkap konsumen / pelanggan (bersihkan dari gelar 'BP', 'IBU', dll)",
-  "customer_phone": "Nomor HP / WhatsApp konsumen (format angka)",
-  "customer_address": "Alamat lengkap pengerjaan servis (jalan, blok, kelurahan, kecamatan, kota)",
-  "unit_model": "Tipe atau model unit yang diservis (contoh: AH-A5SAY, 4T-C50EJ2X, SJ-X165MG)",
+  "notif_number": "Nomor notifikasi unik / Nomor WO / No Laporan (contoh: 2026117562, 202456677811, NTF-2026-1234)",
+  "customer_name": "Nama lengkap konsumen / pelanggan (nama orang/instansi saja, bukan kode model unit, tanpa label 'Nama:' atau kode konsumen)",
+  "customer_phone": "Nomor HP / WhatsApp konsumen (format digit angka bersih, contoh: 081234567890)",
+  "customer_address": "Alamat lengkap pengerjaan servis saja (jalan, nomor, blok, RT/RW, kelurahan, kecamatan, kota) tanpa nama pelanggan dan tanpa kata 'Alamat:'",
+  "unit_model": "Tipe atau model unit yang diservis (contoh: 4T-C85HN7000X, AH-A5SAY, 4T-C50EJ2X, SJ-X165MG)",
   "serial_number": "Nomor seri unit (SN / No. Seri)",
-  "service_date": "Tanggal kunjungan atau tanggal penerimaan dokumen format YYYY-MM-DD",
-  "deadline": "Tanggal batas pengerjaan format YYYY-MM-DD (jika tidak ada samakan dengan service_date)",
-  "status": "'berbayar' atau 'tidak_berbayar' (jika garansi, free klaim, gunakan 'tidak_berbayar'; jika ada biaya, gunakan 'berbayar')",
-  "status_note": "Keterangan tambahan mengenai status garansi atau pembayaran",
+  "service_date": "Tanggal kunjungan atau tanggal penerimaan dokumen format YYYY-MM-DD (konversi dari DD.MM.YYYY atau DD/MM/YYYY; jika tidak ada kosongkan '')",
+  "deadline": "Tanggal batas pengerjaan format YYYY-MM-DD (jika tidak ada samakan dengan service_date; jika tidak ada keduanya kosongkan '')",
+  "status": "'berbayar' atau 'tidak_berbayar' (jika garansi, masih garansi, free klaim, gunakan 'tidak_berbayar'; jika habis garansi, bayar ongkos/suku cadang, gunakan 'berbayar')",
+  "status_note": "Keterangan singkat status garansi/pembayaran jika tertera (misal: 'Garansi', 'Habis Garansi')",
   "work_status": "'selesai' jika dokumen menunjukkan perbaikan selesai, atau 'belum_selesai'",
-  "work_types": ["Daftar jenis pekerjaan, contoh: Perbaikan, Cuci AC, Ganti Part"],
-  "start_time": "Jam mulai pengerjaan jika tertera format HH:MM (contoh: 09:30)",
-  "finish_time": "Jam selesai pengerjaan jika tertera format HH:MM (contoh: 11:00)",
+  "work_types": ["Pilih dari daftar ini saja jika cocok: 'Install Standart', 'Install Bracket', 'Penjelasan', 'Service Minor', 'Service Mayor', 'Penambahan', 'Lain-lain'"],
+  "start_time": "Jam mulai pengerjaan format HH:MM 24 jam (contoh: 09:30; kosongkan '' jika tidak ada)",
+  "finish_time": "Jam selesai pengerjaan format HH:MM 24 jam (contoh: 11:00; kosongkan '' jika tidak ada)",
   "notes": "Catatan keluhan, gejala kerusakan, atau tindakan teknisi yang tertulis pada dokumen"
 }
 
-Jika ada nilai yang tidak ditemukan pada dokumen, kembalikan string kosong "" atau array kosong []. Jangan sertakan teks markdown atau penjelasan di luar JSON.
+Jika ada nilai yang tidak ditemukan pada dokumen, kembalikan string kosong "" atau array kosong []. Jangan mengarang data dan jangan sertakan teks markdown atau penjelasan di luar JSON.
 PROMPT;
     }
 }

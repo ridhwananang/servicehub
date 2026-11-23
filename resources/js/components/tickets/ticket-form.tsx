@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { WorkTypeSelector } from "@/components/work-type-selector";
+import { WorkTypeSelector, WORK_TYPE_OPTIONS } from "@/components/work-type-selector";
 import { CameraCaptureDialog } from "@/components/camera-capture-dialog";
 import { DocumentScannerDialog } from "@/components/document-scanner-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -173,9 +173,27 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
             if (scanned.status) next.status = scanned.status;
             if (scanned.status_note) next.status_note = scanned.status_note;
             if (scanned.work_status) next.work_status = scanned.work_status;
-            if (scanned.work_types && scanned.work_types.length > 0)
-                next.work_types = scanned.work_types;
+            if (scanned.work_types && scanned.work_types.length > 0) {
+                const validSet = new Set<string>(WORK_TYPE_OPTIONS);
+                const matched: string[] = [];
+                const extras: string[] = [];
+
+                for (const wt of scanned.work_types) {
+                    if (validSet.has(wt)) {
+                        if (!matched.includes(wt)) matched.push(wt);
+                    } else if (wt.trim()) {
+                        extras.push(wt.trim());
+                    }
+                }
+
+                if (extras.length > 0) {
+                    if (!matched.includes('Lain-lain')) matched.push('Lain-lain');
+                    next.other_work_text = extras.join(', ');
+                }
+                next.work_types = matched;
+            }
             if (scanned.start_time) next.start_time = scanned.start_time;
+            if (scanned.finish_time) next.finish_time = scanned.finish_time;
             if (scanned.notes) {
                 next.notes = prev.notes
                     ? `${prev.notes}\n${scanned.notes}`

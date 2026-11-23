@@ -181,15 +181,6 @@ function cleanAddressLineByLine(raw: string): string {
         line = line.replace(/\bKEL\.([A-Za-z])/gi, 'KEL. $1');
         line = line.replace(/\bKEC[\.,]([A-Za-z])/gi, 'KEC. $1');
         line = line.replace(/\bKEC,\s*/gi, 'KEC. ');
-        line = line.replace(/\b[GS]ER[PEO]ONG\b/gi, 'SERPONG');
-        line = line.replace(/\bTANG[a-z]EL\b/gi, 'TANGSEL');
-
-        // Fix specific OCR dot-matrix distortions
-        line = line.replace(/\bBLOK\s+-6\b/gi, 'BLOK A-6');
-        line = line.replace(/\bBLOK\s+As\s+10\b/gi, 'BLOK A-6 NO. 20');
-        line = line.replace(/\b10Kds\s+wan\s+Ea\s+JAYA\b/gi, 'KEL. RAWA MEKAR JAYA');
-        line = line.replace(/\b2\s+SEK\b/gi, '2 SEKTOR 12');
-        line = line.replace(/\bwc\s+/gi, '');
 
         // Clean stray noise words at line end
         line = line.replace(/\s+(?:ans|han|ii|wc)\s*$/i, '');
@@ -205,12 +196,7 @@ function cleanAddressLineByLine(raw: string): string {
         }
     }
 
-    let joined = cleaned.join(' ');
-    // Ensure TANGSEL is attached if KEC. SERPONG is present and TANGSEL was omitted
-    if (/SERPONG/i.test(joined) && !/TANGSEL/i.test(joined)) {
-        joined = joined.replace(/SERPONG/i, 'SERPONG TANGSEL');
-    }
-    return joined;
+    return cleaned.join(' ');
 }
 
 export function parseRepairDocument(text: string): ParsedRepairDocument {
@@ -259,12 +245,15 @@ export function parseRepairDocument(text: string): ParsedRepairDocument {
     // 3. Customer Name
     result.customer_name = extractCustomerName(lines);
 
-    // 4. Unit Model (e.g. "Model : AH-A5SAY")
-    const modelMatch = text.match(/Model\s*[:\.]\s*([A-Za-z0-9\-_]+)/i);
+    // 4. Unit Model (e.g. "Model : AH-A5SAY" or "4T-C85HN7000X")
+    const modelMatch =
+        text.match(/Model\s*[:\.]\s*([A-Za-z0-9\-_]+)/i) ||
+        text.match(/\b((?:4T|2T|LC|AH|AU|SJ|ES|FP|KC|KS)-[A-Z0-9-]+)\b/i);
     if (modelMatch) {
         result.unit_model = modelMatch[1].trim();
     }
-    if (text.match(/A[\-\s]?C/i) && !result.unit_model.toLowerCase().includes('ac')) {
+    const isNonAcSharpModel = /^(?:4T|2T|LC|SJ|ES|FP|KC|KS)-/i.test(result.unit_model);
+    if (!isNonAcSharpModel && /\bA[\-\s]?C\b/i.test(text) && !result.unit_model.toLowerCase().includes('ac')) {
         result.unit_model = result.unit_model ? 'AC ' + result.unit_model : 'AC Inverter';
     }
 
@@ -322,6 +311,18 @@ export function parseRepairDocument(text: string): ParsedRepairDocument {
     }
 
     result.customer_address = cleanAddressLineByLine(rawAddress);
+
+    // Recover customer name if bundled as "- <Name> - Alamat : <Address>"
+    const inlineNameAddr = text.match(/-\s*([^-\n:]{2,60}?)\s*-\s*Alamat\s*[:\-]\s*([^\n]+)/i);
+    if (inlineNameAddr) {
+        const candidateName = cleanNameCandidate(inlineNameAddr[1]);
+        if (!result.customer_name && isValidCustomerName(candidateName)) {
+            result.customer_name = candidateName;
+        }
+        if (!result.customer_address) {
+            result.customer_address = cleanAddressLineByLine(inlineNameAddr[2]);
+        }
+    }
 
     // 9. Status Garansi / Biaya
     if (/habis garansi|tidak bergaransi|bayar suku cadang|bayar ongkos/i.test(text)) {

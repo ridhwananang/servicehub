@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Camera, SwitchCamera, Check, RotateCcw, X, AlertCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { captureVisibleVideoFrame } from '@/lib/camera-capture';
 
 interface CameraCaptureDialogProps {
     isOpen: boolean;
@@ -23,7 +24,6 @@ export function CameraCaptureDialog({
 }: CameraCaptureDialogProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const fileInputFallbackRef = useRef<HTMLInputElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const capturedUrlRef = useRef<string | null>(null);
@@ -171,42 +171,22 @@ export function CameraCaptureDialog({
         setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'));
     };
 
-    // Capture photo snapshot from video to canvas
-    const takePhoto = () => {
-        if (!videoRef.current || !canvasRef.current) return;
+    // Capture photo snapshot matching the exact visible viewport
+    const takePhoto = async () => {
+        if (!videoRef.current) return;
 
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        const width = video.videoWidth || 640;
-        const height = video.videoHeight || 480;
+        const blob = await captureVisibleVideoFrame(videoRef.current, {
+            mirror: facingMode === 'user',
+            quality: 0.9,
+        });
 
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // If front camera, flip horizontally for mirror effect
-        if (facingMode === 'user') {
-            ctx.translate(width, 0);
-            ctx.scale(-1, 1);
+        if (blob) {
+            const previewUrl = URL.createObjectURL(blob);
+            capturedUrlRef.current = previewUrl;
+            setCapturedBlob(blob);
+            setCapturedPhotoUrl(previewUrl);
+            stopStream();
         }
-
-        ctx.drawImage(video, 0, 0, width, height);
-
-        canvas.toBlob(
-            (blob) => {
-                if (blob) {
-                    const previewUrl = URL.createObjectURL(blob);
-                    capturedUrlRef.current = previewUrl;
-                    setCapturedBlob(blob);
-                    setCapturedPhotoUrl(previewUrl);
-                    stopStream();
-                }
-            },
-            'image/jpeg',
-            0.88
-        );
     };
 
     // Retake photo
@@ -292,9 +272,6 @@ export function CameraCaptureDialog({
                             </Button>
                         </div>
                     )}
-
-                    {/* Hidden canvas for snapshot rendering */}
-                    <canvas ref={canvasRef} className="hidden" />
 
                     {/* Hidden input for direct camera fallback */}
                     <input

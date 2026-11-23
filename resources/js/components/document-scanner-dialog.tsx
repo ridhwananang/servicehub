@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { createWorker } from "tesseract.js";
 import { compressImage } from "@/lib/image-compressor";
+import { captureVisibleVideoFrame } from "@/lib/camera-capture";
 import {
     parseRepairDocument,
     type ParsedRepairDocument,
@@ -286,36 +287,18 @@ export function DocumentScannerDialog({
     const handleCaptureFromCamera = async () => {
         if (!videoRef.current) return;
 
-        const video = videoRef.current;
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
-        const ctx = canvas.getContext("2d");
+        const blob = await captureVisibleVideoFrame(videoRef.current, {
+            mirror: cameraFacing === "user",
+            quality: 0.95,
+        });
 
-        if (ctx) {
-            if (cameraFacing === "user") {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob(
-                async (blob) => {
-                    if (blob) {
-                        const file = new File(
-                            [blob],
-                            `scan-dokumen-${Date.now()}.jpg`,
-                            {
-                                type: "image/jpeg",
-                            },
-                        );
-                        stopCamera();
-                        await exitFullscreenIfActive();
-                        processDocumentImage(file);
-                    }
-                },
-                "image/jpeg",
-                0.95,
-            );
+        if (blob) {
+            const file = new File([blob], `scan-dokumen-${Date.now()}.jpg`, {
+                type: "image/jpeg",
+            });
+            stopCamera();
+            await exitFullscreenIfActive();
+            processDocumentImage(file);
         }
     };
 

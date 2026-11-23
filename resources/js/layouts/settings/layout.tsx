@@ -58,7 +58,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 >
                     <Link href="/dashboard">
                         <ArrowLeft className="size-4 text-slate-500" />
-                        <span>Kembali ke Dashboard</span>
+                        <span>Kembali</span>
                     </Link>
                 </Button>
             </div>

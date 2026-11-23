@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Head, usePage } from '@inertiajs/react';
-import { TicketDialog } from '@/components/ticket-dialog';
+import { Head, usePage, router } from '@inertiajs/react';
 import { PhotoPreviewDialog } from '@/components/photo-preview-dialog';
 import {
     HeaderNav,
@@ -9,7 +8,6 @@ import {
     TicketCardsView,
     TicketTableView,
     DeleteTicketDialog,
-    TicketDetailDialog,
 } from '@/components/dashboard';
 import { useTicketFilters } from '@/hooks/use-ticket-filters';
 import type { ServiceTicket, TicketStats, TicketFilters, User } from '@/types';
@@ -41,11 +39,8 @@ export default function Dashboard({
     const canDelete = auth?.user?.role === 'admin';
 
     // Modal states
-    const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
-    const [ticketToEdit, setTicketToEdit] = useState<ServiceTicket | null>(null);
     const [previewTicket, setPreviewTicket] = useState<ServiceTicket | null>(null);
     const [ticketToDelete, setTicketToDelete] = useState<ServiceTicket | null>(null);
-    const [detailTicket, setDetailTicket] = useState<ServiceTicket | null>(null);
 
     // Custom hook for debounced search, filtering, and responsive view state
     const {
@@ -76,13 +71,11 @@ export default function Dashboard({
     });
 
     const handleCreateNew = useCallback(() => {
-        setTicketToEdit(null);
-        setIsTicketDialogOpen(true);
+        router.visit('/tickets/create');
     }, []);
 
     const handleEdit = useCallback((ticket: ServiceTicket) => {
-        setTicketToEdit(ticket);
-        setIsTicketDialogOpen(true);
+        router.visit(`/tickets/${ticket.id}/edit`);
     }, []);
 
     const handleDelete = useCallback((ticket: ServiceTicket) => {
@@ -116,7 +109,7 @@ export default function Dashboard({
     }, []);
 
     const handleViewDetail = useCallback((ticket: ServiceTicket) => {
-        setDetailTicket(ticket);
+        router.visit(`/tickets/${ticket.id}`);
     }, []);
 
     return (
@@ -194,22 +187,6 @@ export default function Dashboard({
                     onViewDetail={handleViewDetail}
                 />
             </main>
-
-            {/* Ticket Full Detail Modal */}
-            <TicketDetailDialog
-                isOpen={Boolean(detailTicket)}
-                onClose={() => setDetailTicket(null)}
-                ticket={detailTicket}
-                onEdit={handleEdit}
-                onPreviewPhotos={handlePreviewPhotos}
-            />
-
-            {/* Create / Edit Ticket Modal */}
-            <TicketDialog
-                isOpen={isTicketDialogOpen}
-                onClose={() => setIsTicketDialogOpen(false)}
-                ticketToEdit={ticketToEdit}
-            />
 
             {/* Photo Preview Lightbox */}
             <PhotoPreviewDialog

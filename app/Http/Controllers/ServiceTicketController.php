@@ -73,6 +73,38 @@ class ServiceTicketController extends Controller
     }
 
     /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return Inertia::render('tickets/create');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(ServiceTicket $ticket)
+    {
+        $ticket->load('creator:id,name,role,avatar');
+
+        return Inertia::render('tickets/show', [
+            'ticket' => $ticket,
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(ServiceTicket $ticket)
+    {
+        $ticket->load('creator:id,name,role,avatar');
+
+        return Inertia::render('tickets/edit', [
+            'ticket' => $ticket,
+        ]);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreServiceTicketRequest $request)
@@ -111,7 +143,7 @@ class ServiceTicketController extends Controller
 
         ServiceTicket::create($validated);
 
-        return redirect()->back()->with('success', 'Tiket Servis berhasil ditambahkan.');
+        return redirect()->route('dashboard')->with('success', 'Tiket Servis berhasil ditambahkan.');
     }
 
     /**
@@ -146,7 +178,7 @@ class ServiceTicketController extends Controller
 
         $ticket->update($validated);
 
-        return redirect()->back()->with('success', 'Tiket Servis berhasil diperbarui.');
+        return redirect()->route('dashboard')->with('success', "Tiket {$ticket->notif_number} berhasil diperbarui.");
     }
 
     /**

@@ -82,9 +82,14 @@ export const TicketCardItem = React.memo(function TicketCardItem({
                 {/* Top Meta Row: Notif Number, Center, and Payment Status */}
                 <div className="flex items-center justify-between gap-2 pt-0.5">
                     <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-mono text-xs font-bold text-zinc-900 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-100 px-2.5 py-0.5 rounded-md border border-zinc-200/80 dark:border-zinc-700/80 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => onViewDetail(ticket)}
+                            className="font-mono text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 hover:text-red-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-100 dark:hover:text-red-400 px-2.5 py-0.5 rounded-md border border-zinc-200/80 dark:border-zinc-700/80 shrink-0 transition-colors cursor-pointer"
+                            title={`Lihat detail tiket ${ticket.notif_number}`}
+                        >
                             {ticket.notif_number}
-                        </span>
+                        </button>
                         <span
                             className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold border shrink-0 ${
                                 ticket.mainwork_center === 'Pulogadung'

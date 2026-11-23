@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import { Search, Download, Plus, Filter, Table as TableIcon, LayoutGrid, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -120,13 +121,14 @@ export function FilterBar({
 
                     {/* Tambah Notif Button */}
                     <Button
-                        type="button"
-                        onClick={onCreateNew}
+                        asChild
                         aria-label="Tambah Notif atau Tiket Servis Baru"
                         className="h-9.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-3 sm:px-4 flex items-center justify-center gap-1.5 shadow-xs shadow-red-600/20 cursor-pointer active:scale-95 transition-all flex-1 sm:flex-none"
                     >
-                        <Plus className="size-4 shrink-0" aria-hidden="true" />
-                        <span>Tambah Notif</span>
+                        <Link href="/tickets/create" className="flex items-center gap-1.5">
+                            <Plus className="size-4 shrink-0" aria-hidden="true" />
+                            <span>Tambah Notif</span>
+                        </Link>
                     </Button>
                 </div>
             </div>

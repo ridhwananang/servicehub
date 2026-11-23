@@ -1,17 +1,8 @@
 {
-    "cloud": true,
-    "guidelines": true,
+    "agents": [
+        "antigravity"
+    ],
     "mcp": true,
     "nightwatch": false,
-    "sail": false,
-    "skills": [
-        "infer-conventions",
-        "deploying-to-cloud",
-        "fortify-development",
-        "laravel-best-practices",
-        "testing-best-practices",
-        "wayfinder-development",
-        "inertia-react-development",
-        "tailwindcss-development"
-    ]
+    "sail": false
 }

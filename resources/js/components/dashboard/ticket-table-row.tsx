@@ -131,16 +131,26 @@ export const TicketTableRow = React.memo(function TicketTableRow({
         <tr className="group transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
             {/* Notif Unique */}
             <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
-                <span className="inline-block rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                <button
+                    type="button"
+                    onClick={() => onViewDetail(ticket)}
+                    className="inline-block rounded-md bg-slate-100 hover:bg-slate-200 px-2.5 py-1 font-mono text-xs font-bold text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer text-left"
+                    title={`Lihat detail tiket ${ticket.notif_number}`}
+                >
                     {ticket.notif_number}
-                </span>
+                </button>
             </td>
 
             {/* Nama Pelanggan */}
             <td className="px-3.5 py-3.5 align-middle whitespace-nowrap">
-                <span className="font-semibold text-slate-900 dark:text-white">
+                <button
+                    type="button"
+                    onClick={() => onViewDetail(ticket)}
+                    className="font-semibold text-slate-900 hover:text-red-600 dark:text-white dark:hover:text-red-400 transition-colors cursor-pointer text-left"
+                    title={`Lihat detail ${ticket.customer_name}`}
+                >
                     {ticket.customer_name}
-                </span>
+                </button>
             </td>
 
             {/* No Handphone */}

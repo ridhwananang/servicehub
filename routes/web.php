@@ -9,12 +9,15 @@ Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [ServiceTicketController::class, 'index'])->name('dashboard');
+    Route::get('tickets/create', [ServiceTicketController::class, 'create'])->name('tickets.create');
     Route::post('tickets', [ServiceTicketController::class, 'store'])->name('tickets.store');
     Route::post('tickets/scan-document', [ScanDocumentController::class, 'scan'])->name('tickets.scan-document')->middleware('throttle:30,1');
+    Route::get('tickets/export', [ServiceTicketController::class, 'exportXlsx'])->name('tickets.export');
+    Route::get('tickets/{ticket}', [ServiceTicketController::class, 'show'])->name('tickets.show');
+    Route::get('tickets/{ticket}/edit', [ServiceTicketController::class, 'edit'])->name('tickets.edit');
     Route::put('tickets/{ticket}', [ServiceTicketController::class, 'update'])->name('tickets.update');
     Route::patch('tickets/{ticket}/toggle-status', [ServiceTicketController::class, 'toggleWorkStatus'])->name('tickets.toggle-status');
     Route::delete('tickets/{ticket}', [ServiceTicketController::class, 'destroy'])->name('tickets.destroy')->middleware('admin');
-    Route::get('tickets/export', [ServiceTicketController::class, 'exportXlsx'])->name('tickets.export');
 });
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {

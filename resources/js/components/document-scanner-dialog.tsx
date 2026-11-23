@@ -26,8 +26,6 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
-    Cpu,
-    Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createWorker } from "tesseract.js";
@@ -141,7 +139,6 @@ export function DocumentScannerDialog({
     );
     const [showRawText, setShowRawText] = useState<boolean>(false);
     const [setAsVisitPhoto, setSetAsVisitPhoto] = useState<boolean>(true);
-    const [scanEngine, setScanEngine] = useState<"ai" | "tesseract">("ai");
 
     // Camera stream states
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -256,9 +253,7 @@ export function DocumentScannerDialog({
         fileToUpload: File,
     ): Promise<ParsedRepairDocument> => {
         setOcrProgress(35);
-        setOcrStatusText(
-            "Mengirim dan menganalisis dokumen dengan Cloud AI Vision...",
-        );
+        setOcrStatusText("Menganalisis dokumen tiket...");
 
         const formData = new FormData();
         formData.append("document", fileToUpload);
@@ -282,7 +277,7 @@ export function DocumentScannerDialog({
 
         if (!response.ok || !json.success) {
             const message =
-                json.message || "Gagal memproses dokumen dengan Cloud AI.";
+                json.message || "Gagal memproses dokumen secara otomatis.";
             const err = new Error(message);
             (err as any).code = json.code;
             throw err;
@@ -298,12 +293,12 @@ export function DocumentScannerDialog({
         file: File,
     ): Promise<ParsedRepairDocument> => {
         setOcrProgress(20);
-        setOcrStatusText("Mengoptimalkan kontras dokumen untuk OCR...");
+        setOcrStatusText("Mengoptimalkan kontras dokumen...");
 
         const ocrCanvas = await preprocessImageToCanvas(file);
 
         setOcrProgress(30);
-        setOcrStatusText("Menyiapkan OCR Engine Tesseract...");
+        setOcrStatusText("Menyiapkan pemindaian dokumen...");
 
         const worker = await createWorker("eng", 1, {
             logger: (m) => {
@@ -311,11 +306,11 @@ export function DocumentScannerDialog({
                     const prog = Math.round(m.progress * 60) + 30;
                     setOcrProgress(prog);
                     setOcrStatusText(
-                        `Mengenali karakter Tesseract... ${Math.round(m.progress * 100)}%`,
+                        `Mengenali teks dokumen... ${Math.round(m.progress * 100)}%`,
                     );
                 } else if (m.status === "loading tesseract core") {
                     setOcrProgress(25);
-                    setOcrStatusText("Memuat core pengenalan karakter...");
+                    setOcrStatusText("Memuat modul pengenalan karakter...");
                 }
             },
         });
@@ -380,33 +375,25 @@ export function DocumentScannerDialog({
             setImagePreview(previewUrl);
 
             let result: ParsedRepairDocument | null = null;
+            const isOnline =
+                typeof navigator !== "undefined" ? navigator.onLine : true;
 
-            if (scanEngine === "ai") {
+            if (isOnline) {
                 try {
                     result = await processWithAi(compressed);
-                    const provLabel =
-                        result.provider === "groq"
-                            ? "Groq AI (Qwen Vision)"
-                            : result.provider === "gemini"
-                              ? "Gemini AI"
-                              : "Cloud AI";
-                    toast.success(
-                        `Dokumen berhasil dianalisis dengan ${provLabel}!`,
-                    );
+                    toast.success("Dokumen berhasil dianalisis!");
                 } catch (aiErr: any) {
                     console.warn(
-                        "AI scan error, fallback to Tesseract:",
+                        "Cloud scan failed, fallback to local OCR:",
                         aiErr,
                     );
-                    toast.warning(
-                        `AI Server: ${aiErr.message || "Tidak tersedia"}. Beralih otomatis ke Tesseract OCR...`,
-                    );
                     setOcrStatusText(
-                        "Beralih ke pemindaian lokal Tesseract OCR...",
+                        "Beralih ke pemindaian lokal...",
                     );
                     result = await processWithTesseract(file);
                 }
             } else {
+                setOcrStatusText("Memproses dokumen secara offline...");
                 result = await processWithTesseract(file);
             }
 
@@ -459,72 +446,6 @@ export function DocumentScannerDialog({
                     {/* STEP 1: Select Input Method */}
                     {step === "select" && (
                         <div className="space-y-4 sm:space-y-5">
-                            {/* Engine Selection Toggle Card */}
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`size-10 rounded-xl flex items-center justify-center transition-colors shrink-0 ${
-                                            scanEngine === "ai"
-                                                ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
-                                                : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600"
-                                        }`}
-                                    >
-                                        {scanEngine === "ai" ? (
-                                            <Sparkles className="size-5" />
-                                        ) : (
-                                            <Cpu className="size-5" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                                                {scanEngine === "ai"
-                                                    ? "AI Vision (Groq Qwen 3.8)"
-                                                    : "Tesseract OCR (Lokal)"}
-                                            </span>
-                                            {scanEngine === "ai" && (
-                                                <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 text-[10px] px-1.5 py-0 font-medium">
-                                                    Akurasi Tinggi & Kilat
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                            {scanEngine === "ai"
-                                                ? "Ekstraksi AI cerdas super cepat via Groq (otomatis cadangkan ke Tesseract jika offline)"
-                                                : "Pemrosesan karakter langsung di browser tanpa koneksi internet"}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="inline-flex p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300/70 dark:border-slate-700/70 shrink-0 self-end sm:self-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => setScanEngine("ai")}
-                                        className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                                            scanEngine === "ai"
-                                                ? "bg-white dark:bg-slate-900 text-red-600 dark:text-red-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
-                                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                                        }`}
-                                    >
-                                        Groq AI
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setScanEngine("tesseract")
-                                        }
-                                        className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                                            scanEngine === "tesseract"
-                                                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-200/60 dark:border-slate-700"
-                                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                                        }`}
-                                    >
-                                        <Cpu className="size-3" />
-                                        Tesseract
-                                    </button>
-                                </div>
-                            </div>
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Option 1: Kamera Langsung */}
                                 <button
@@ -727,19 +648,10 @@ export function DocumentScannerDialog({
                                     <span className="text-sm font-bold text-slate-900 dark:text-white">
                                         Data Berhasil Dibaca dari Dokumen
                                     </span>
-                                    {parsedData.provider === "tesseract" ? (
-                                        <Badge className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] px-2 py-0.5 flex items-center gap-1 font-semibold">
-                                            <Cpu className="size-3" />
-                                            Tesseract OCR
-                                        </Badge>
-                                    ) : (
-                                        <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-[10px] px-2 py-0.5 flex items-center gap-1 font-semibold">
-                                            <Sparkles className="size-3" />
-                                            {parsedData.provider === "groq"
-                                                ? "Groq AI"
-                                                : "Gemini AI"}
-                                        </Badge>
-                                    )}
+                                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 flex items-center gap-1 font-semibold">
+                                        <Sparkles className="size-3" />
+                                        Otomatis Terverifikasi
+                                    </Badge>
                                 </div>
 
                                 <Button

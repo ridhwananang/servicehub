@@ -47,8 +47,7 @@ export default function Security(props: Props) {
                         >
                             <Link href="/dashboard" className="flex items-center gap-1.5 text-xs font-semibold">
                                 <ArrowLeft className="size-4 shrink-0" />
-                                <span className="hidden sm:inline">Kembali ke Dashboard</span>
-                                <span className="inline sm:hidden">Dashboard</span>
+                                <span>Kembali</span>
                             </Link>
                         </Button>
                         <div className="h-5 w-px bg-white/25 hidden xs:block shrink-0" />

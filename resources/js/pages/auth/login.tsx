@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { Form, Head, Link } from '@inertiajs/react';
-import { Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
-import { store } from '@/routes/login';
-import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/passkey-verify';
+import React, { useState } from "react";
+import { Form, Head, Link } from "@inertiajs/react";
+import { Mail, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import InputError from "@/components/input-error";
+import PasswordInput from "@/components/password-input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { register } from "@/routes";
+import { store } from "@/routes/login";
+import { request } from "@/routes/password";
+import PasskeyVerify from "@/components/passkey-verify";
 
 type Props = {
     status?: string;
@@ -19,8 +19,8 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [remember, setRemember] = useState(false);
 
     return (
@@ -38,7 +38,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
             <Form
                 {...store.form()}
-                resetOnSuccess={['password']}
+                resetOnSuccess={["password"]}
                 className="flex flex-col gap-3.5"
             >
                 {({ processing, errors }) => (
@@ -46,7 +46,10 @@ export default function Login({ status, canResetPassword }: Props) {
                         <div className="space-y-3">
                             {/* Email Field */}
                             <div className="space-y-1">
-                                <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                <Label
+                                    htmlFor="email"
+                                    className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                                >
                                     Alamat Email
                                 </Label>
                                 <div className="relative">
@@ -56,7 +59,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                         type="email"
                                         name="email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         required
                                         autoFocus
                                         tabIndex={1}
@@ -71,7 +76,10 @@ export default function Login({ status, canResetPassword }: Props) {
                             {/* Password Field */}
                             <div className="space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <Label
+                                        htmlFor="password"
+                                        className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                                    >
                                         Kata Sandi
                                     </Label>
                                     {canResetPassword && (
@@ -90,7 +98,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                         id="password"
                                         name="password"
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(e) =>
+                                            setPassword(e.target.value)
+                                        }
                                         required
                                         tabIndex={2}
                                         autoComplete="current-password"
@@ -108,7 +118,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                         id="remember"
                                         name="remember"
                                         checked={remember}
-                                        onCheckedChange={(checked) => setRemember(Boolean(checked))}
+                                        onCheckedChange={(checked) =>
+                                            setRemember(Boolean(checked))
+                                        }
                                         tabIndex={3}
                                         className="border-slate-300 dark:border-slate-700 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 data-[state=checked]:text-white"
                                     />
@@ -144,7 +156,7 @@ export default function Login({ status, canResetPassword }: Props) {
                         </div>
 
                         {/* Sign Up Link */}
-                        <div className="text-center text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 pt-2.5 border-t border-slate-200/80 dark:border-slate-800/80">
+                        {/* <div className="text-center text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 pt-2.5 border-t border-slate-200/80 dark:border-slate-800/80">
                             Belum memiliki akun teknisi?{' '}
                             <Link
                                 href={register()}
@@ -153,7 +165,7 @@ export default function Login({ status, canResetPassword }: Props) {
                             >
                                 Buat Akun Baru
                             </Link>
-                        </div>
+                        </div> */}
                     </>
                 )}
             </Form>
@@ -162,7 +174,6 @@ export default function Login({ status, canResetPassword }: Props) {
 }
 
 Login.layout = {
-    title: 'Masuk ke Akun Aquos Platinum',
-    description: 'Akses sistem work order & notifikasi pelaporan teknisi',
+    title: "Masuk ke Akun Aquos Platinum",
+    description: "Akses sistem work order & notifikasi pelaporan teknisi",
 };
-

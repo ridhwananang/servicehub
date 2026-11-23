@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
@@ -31,17 +30,9 @@ export default function AuthSimpleLayout({
                         className="h-9 sm:h-11 w-auto object-contain shrink-0 drop-shadow-md transition-transform group-hover:scale-105"
                     />
                     <div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-xs">
-                                Aquos Platinum
-                            </span>
-                            <Badge
-                                variant="secondary"
-                                className="bg-white/20 text-white text-[10px] border border-white/30 font-bold backdrop-blur-xs"
-                            >
-                                PWA
-                            </Badge>
-                        </div>
+                        <span className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-xs block leading-tight">
+                            Aquos Platinum
+                        </span>
                         <p className="hidden xs:block text-[10px] font-medium text-red-100">
                             Pulogadung &bull; MOI Mainwork
                         </p>
@@ -54,9 +45,8 @@ export default function AuthSimpleLayout({
                         href={home()}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-white transition-all bg-white/15 hover:bg-white/25 border border-white/25 px-3 py-1.5 rounded-xl shadow-xs backdrop-blur-xs active:scale-95 hover:scale-[1.02]"
                     >
-                        <ArrowLeft className="size-3 text-white" />
-                        <span className="hidden xs:inline">Kembali ke Beranda</span>
-                        <span className="xs:hidden">Beranda</span>
+                        <ArrowLeft className="size-3.5 text-white" />
+                        <span>Kembali</span>
                     </Link>
                 </div>
             </header>

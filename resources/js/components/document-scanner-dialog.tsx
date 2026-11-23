@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 import { createWorker } from "tesseract.js";
 import { compressImage } from "@/lib/image-compressor";
-import { captureVisibleVideoFrame } from "@/lib/camera-capture";
+import { captureVisibleVideoFrame, isMobileDevice } from "@/lib/camera-capture";
 import {
     parseRepairDocument,
     type ParsedRepairDocument,
@@ -155,6 +155,7 @@ export function DocumentScannerDialog({
     const [isNativeFullscreen, setIsNativeFullscreen] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const nativeCameraInputRef = useRef<HTMLInputElement>(null);
 
     const stopCamera = useCallback(() => {
         if (mediaStreamRef.current) {
@@ -307,6 +308,7 @@ export function DocumentScannerDialog({
     ) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            e.target.value = "";
             stopCamera();
             await exitFullscreenIfActive();
             processDocumentImage(file);
@@ -513,6 +515,14 @@ export function DocumentScannerDialog({
                     onChange={handleFileSelected}
                     className="hidden"
                 />
+                <input
+                    ref={nativeCameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileSelected}
+                    className="hidden"
+                />
 
                 {/* Header (Non-camera steps) */}
                 {!isCameraStep && (
@@ -716,7 +726,13 @@ export function DocumentScannerDialog({
                                     {/* Option 1: Kamera Langsung */}
                                     <button
                                         type="button"
-                                        onClick={() => startCamera("environment")}
+                                        onClick={() => {
+                                            if (isMobileDevice()) {
+                                                nativeCameraInputRef.current?.click();
+                                            } else {
+                                                startCamera("environment");
+                                            }
+                                        }}
                                         className="flex flex-col items-center justify-center gap-3 p-6 sm:p-8 rounded-2xl border-2 border-dashed border-red-300 hover:border-red-600 bg-red-50/50 hover:bg-red-50/90 dark:border-red-800/80 dark:bg-red-950/30 dark:hover:bg-red-950/60 transition-all cursor-pointer group active:scale-[0.98]"
                                     >
                                         <div className="size-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:scale-110 transition-transform">

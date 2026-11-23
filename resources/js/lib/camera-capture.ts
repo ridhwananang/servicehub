@@ -1,4 +1,23 @@
 /**
+ * Detects whether the current device is a mobile phone or tablet where
+ * `<input type="file" accept="image/*" capture="environment">` launches
+ * the device's native camera app directly.
+ */
+export function isMobileDevice(): boolean {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+        return false;
+    }
+
+    const ua = navigator.userAgent || '';
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+        return true;
+    }
+
+    // iPadOS 13+ reports Macintosh UA with multi-touch support
+    return navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua);
+}
+
+/**
  * Captures the exact visible (object-cover cropped) region of a <video> element
  * onto an offscreen canvas and returns a JPEG Blob, so the captured photo matches
  * what the user sees on the device screen 1:1.

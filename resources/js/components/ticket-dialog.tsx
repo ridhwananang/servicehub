@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compressor";
+import { isMobileDevice } from "@/lib/camera-capture";
 import type { ParsedRepairDocument } from "@/lib/document-parser";
 import type { ServiceTicket } from "@/types";
 
@@ -87,6 +88,8 @@ export function TicketDialog({
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const visitFileInputRef = React.useRef<HTMLInputElement>(null);
     const completionFileInputRef = React.useRef<HTMLInputElement>(null);
+    const visitCameraInputRef = React.useRef<HTMLInputElement>(null);
+    const completionCameraInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleCameraCapture = async (file: File, previewUrl: string) => {
         const compressedFile = await compressImage(file);
@@ -175,6 +178,7 @@ export function TicketDialog({
     ) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            e.target.value = "";
             const compressed = await compressImage(file);
             setData("visit_photo", compressed);
             setVisitPreview(URL.createObjectURL(compressed));
@@ -186,6 +190,7 @@ export function TicketDialog({
     ) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            e.target.value = "";
             const compressed = await compressImage(file);
             setData("completion_photo", compressed);
             setCompletionPreview(URL.createObjectURL(compressed));
@@ -913,9 +918,13 @@ export function TicketDialog({
                                     <div className="flex flex-col gap-1.5 w-full xs:flex-1">
                                         <Button
                                             type="button"
-                                            onClick={() =>
-                                                setCameraTarget("visit")
-                                            }
+                                            onClick={() => {
+                                                if (isMobileDevice()) {
+                                                    visitCameraInputRef.current?.click();
+                                                } else {
+                                                    setCameraTarget("visit");
+                                                }
+                                            }}
                                             className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 font-semibold rounded-lg flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
                                         >
                                             <Camera className="size-3.5" />
@@ -936,6 +945,14 @@ export function TicketDialog({
                                     </div>
                                 </div>
 
+                                <input
+                                    ref={visitCameraInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleVisitFileChange}
+                                    className="hidden"
+                                />
                                 <input
                                     ref={visitFileInputRef}
                                     type="file"
@@ -987,9 +1004,15 @@ export function TicketDialog({
                                     <div className="flex flex-col gap-1.5 w-full xs:flex-1">
                                         <Button
                                             type="button"
-                                            onClick={() =>
-                                                setCameraTarget("completion")
-                                            }
+                                            onClick={() => {
+                                                if (isMobileDevice()) {
+                                                    completionCameraInputRef.current?.click();
+                                                } else {
+                                                    setCameraTarget(
+                                                        "completion",
+                                                    );
+                                                }
+                                            }}
                                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-semibold rounded-lg flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
                                         >
                                             <Camera className="size-3.5" />
@@ -1010,6 +1033,14 @@ export function TicketDialog({
                                     </div>
                                 </div>
 
+                                <input
+                                    ref={completionCameraInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleCompletionFileChange}
+                                    className="hidden"
+                                />
                                 <input
                                     ref={completionFileInputRef}
                                     type="file"

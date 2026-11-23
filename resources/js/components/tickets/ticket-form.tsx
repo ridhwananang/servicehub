@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compressor";
+import { isMobileDevice } from "@/lib/camera-capture";
 import type { ParsedRepairDocument } from "@/lib/document-parser";
 import type { ServiceTicket } from "@/types";
 
@@ -94,6 +95,8 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
     } | null>(null);
     const visitFileInputRef = React.useRef<HTMLInputElement>(null);
     const completionFileInputRef = React.useRef<HTMLInputElement>(null);
+    const visitCameraInputRef = React.useRef<HTMLInputElement>(null);
+    const completionCameraInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleCameraCapture = async (file: File, previewUrl: string) => {
         const compressedFile = await compressImage(file);
@@ -133,6 +136,7 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
     ) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            e.target.value = "";
             const compressed = await compressImage(file);
             setData("visit_photo", compressed);
             setVisitPreview(URL.createObjectURL(compressed));
@@ -144,6 +148,7 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
     ) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            e.target.value = "";
             const compressed = await compressImage(file);
             setData("completion_photo", compressed);
             setCompletionPreview(URL.createObjectURL(compressed));
@@ -886,7 +891,13 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCameraTarget("visit")}
+                                        onClick={() => {
+                                            if (isMobileDevice()) {
+                                                visitCameraInputRef.current?.click();
+                                            } else {
+                                                setCameraTarget("visit");
+                                            }
+                                        }}
                                         className="flex-1 rounded-xl text-xs gap-1.5 cursor-pointer h-10 border-slate-300 dark:border-slate-700"
                                     >
                                         <Camera className="size-3.5 text-red-600" />
@@ -904,6 +915,14 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
                                         <Upload className="size-3.5 text-blue-600" />
                                         <span>Unggah Berkas</span>
                                     </Button>
+                                    <input
+                                        ref={visitCameraInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        className="hidden"
+                                        onChange={handleVisitFileChange}
+                                    />
                                     <input
                                         ref={visitFileInputRef}
                                         type="file"
@@ -969,9 +988,13 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() =>
-                                            setCameraTarget("completion")
-                                        }
+                                        onClick={() => {
+                                            if (isMobileDevice()) {
+                                                completionCameraInputRef.current?.click();
+                                            } else {
+                                                setCameraTarget("completion");
+                                            }
+                                        }}
                                         className="flex-1 rounded-xl text-xs gap-1.5 cursor-pointer h-10 border-slate-300 dark:border-slate-700"
                                     >
                                         <Camera className="size-3.5 text-red-600" />
@@ -989,6 +1012,14 @@ export function TicketForm({ initialTicket, isEdit = false }: TicketFormProps) {
                                         <Upload className="size-3.5 text-blue-600" />
                                         <span>Unggah Berkas</span>
                                     </Button>
+                                    <input
+                                        ref={completionCameraInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        className="hidden"
+                                        onChange={handleCompletionFileChange}
+                                    />
                                     <input
                                         ref={completionFileInputRef}
                                         type="file"
